@@ -1,0 +1,169 @@
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  TENANT
+}
+
+enum InvoiceStatus {
+  UNPAID
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  RESOLVED
+  CLOSED
+}
+
+enum ExpenseDistributionMethod {
+  PER_APARTMENT
+  PER_PERSON
+  BY_CONSUMPTION
+  BY_SURFACE
+  CUSTOM
+}
+
+model User {
+  id           String      @id @default(cuid())
+  name         String
+  email        String      @unique
+  passwordHash String
+  role         UserRole
+  createdAt    DateTime    @default(now())
+
+  apartments   Apartment[]
+}
+
+model Association {
+  id        String   @id @default(cuid())
+  name      String
+  address   String
+  createdAt DateTime @default(now())
+
+  apartments    Apartment[]
+  expenses      Expense[]
+  announcements Announcement[]
+}
+
+model Apartment {
+  id                String   @id @default(cuid())
+  associationId     String
+  ownerId           String
+  number            String
+  floor             Int
+  surface           Float
+  numberOfResidents Int
+  createdAt         DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id])
+  owner       User        @relation(fields: [ownerId], references: [id])
+
+  consumptions Consumption[]
+  invoices     Invoice[]
+  tickets      Ticket[]
+}
+
+model Consumption {
+  id          String   @id @default(cuid())
+  apartmentId String
+  month       Int
+  year        Int
+  coldWater   Float   @default(0)
+  hotWater    Float   @default(0)
+  gas         Float   @default(0)
+  electricity Float   @default(0)
+  submittedAt DateTime @default(now())
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id])
+
+  @@unique([apartmentId, month, year])
+}
+
+model Expense {
+  id                 String                    @id @default(cuid())
+  associationId      String
+  month              Int
+  year               Int
+  type               String
+  description        String
+  totalAmount        Decimal                   @db.Decimal(10, 2)
+  distributionMethod ExpenseDistributionMethod
+  createdAt          DateTime                  @default(now())
+
+  association Association @relation(fields: [associationId], references: [id])
+}
+
+model Invoice {
+  id          String        @id @default(cuid())
+  apartmentId String
+  month       Int
+  year        Int
+  totalAmount Decimal       @db.Decimal(10, 2)
+  status      InvoiceStatus @default(UNPAID)
+  generatedAt DateTime      @default(now())
+  paidAt      DateTime?
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id])
+
+  items    InvoiceItem[]
+  payments Payment[]
+
+  @@unique([apartmentId, month, year])
+}
+
+model InvoiceItem {
+  id          String  @id @default(cuid())
+  invoiceId   String
+  description String
+  amount      Decimal @db.Decimal(10, 2)
+  sourceType  String?
+  sourceId    String?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model Payment {
+  id              String   @id @default(cuid())
+  invoiceId       String
+  amount          Decimal  @db.Decimal(10, 2)
+  method          String
+  status          String
+  stripeSessionId String?
+  paidAt          DateTime?
+  createdAt       DateTime @default(now())
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id])
+}
+
+model Ticket {
+  id          String       @id @default(cuid())
+  apartmentId String
+  title       String
+  description String
+  status      TicketStatus @default(OPEN)
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  apartment Apartment @relation(fields: [apartmentId], references: [id])
+}
+
+model Announcement {
+  id            String   @id @default(cuid())
+  associationId String
+  title         String
+  content       String
+  createdAt     DateTime @default(now())
+
+  association Association @relation(fields: [associationId], references: [id])
+}
