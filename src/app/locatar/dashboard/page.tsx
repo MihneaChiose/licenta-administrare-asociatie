@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { getSession } from "@/lib/session";
@@ -20,12 +21,15 @@ export default async function TenantDashboardPage() {
         <p className="mt-2 text-gray-600">Bine ai venit, {session.name}.</p>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
-          <div className="rounded-2xl bg-white p-6 shadow">
+          <Link
+            href="/locatar/consum"
+            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
+          >
             <h2 className="font-semibold">Consum lunar</h2>
             <p className="mt-2 text-sm text-gray-600">
               Transmite consumul pentru luna curenta.
             </p>
-          </div>
+          </Link>
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="font-semibold">Plati</h2>

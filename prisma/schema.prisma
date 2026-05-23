@@ -88,6 +88,7 @@ model Consumption {
   hotWater    Float   @default(0)
   gas         Float   @default(0)
   electricity Float   @default(0)
+  heating     Float   @default(0)
   submittedAt DateTime @default(now())
 
   apartment Apartment @relation(fields: [apartmentId], references: [id])
