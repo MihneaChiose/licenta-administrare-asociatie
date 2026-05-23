@@ -16,6 +16,11 @@ export default async function AdminApartmentsPage() {
   }
 
   const apartments = await prisma.apartment.findMany({
+    where: {
+      association: {
+        adminId: session.id,
+      },
+    },
     include: {
       owner: true,
       association: true,
