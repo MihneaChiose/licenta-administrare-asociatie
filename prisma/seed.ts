@@ -50,6 +50,7 @@ async function main() {
       id: "default-association",
       name: "Asociatia Bloc A1",
       address: "Strada Exemplu nr. 10, Bucuresti",
+      adminId: admin.id,
     },
   });
 

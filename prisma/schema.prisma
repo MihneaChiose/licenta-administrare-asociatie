@@ -43,13 +43,18 @@ model User {
   createdAt    DateTime    @default(now())
 
   apartments   Apartment[]
+
+  managedAssociations Association[] @relation("AssociationAdmin")
 }
 
 model Association {
   id        String   @id @default(cuid())
   name      String
   address   String
+  adminId   String
   createdAt DateTime @default(now())
+
+  admin User @relation("AssociationAdmin", fields: [adminId], references: [id])
 
   apartments    Apartment[]
   expenses      Expense[]
