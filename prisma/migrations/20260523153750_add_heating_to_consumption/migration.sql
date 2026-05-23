@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE "Consumption" ADD COLUMN     "heating" DOUBLE PRECISION NOT NULL DEFAULT 0;
