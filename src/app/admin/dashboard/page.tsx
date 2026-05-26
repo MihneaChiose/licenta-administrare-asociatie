@@ -41,12 +41,15 @@ export default async function AdminDashboardPage() {
             </p>
           </Link>
 
-          <div className="rounded-2xl bg-white p-6 shadow">
+          <Link
+            href="/admin/cheltuieli"
+            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
+          >
             <h2 className="font-semibold">Cheltuieli</h2>
             <p className="mt-2 text-sm text-gray-600">
               Introducere si calcul cheltuieli lunare.
             </p>
-          </div>
+          </Link>
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="font-semibold">Sesizari</h2>
