@@ -41,12 +41,15 @@ export default async function TenantDashboardPage() {
             </p>
           </Link>
 
-          <div className="rounded-2xl bg-white p-6 shadow">
+          <Link
+            href="/locatar/sesizari"
+            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
+          >
             <h2 className="font-semibold">Sesizari</h2>
             <p className="mt-2 text-sm text-gray-600">
               Trimite si urmareste sesizari.
             </p>
-          </div>
+          </Link>
         </div>
       </div>
     </main>
