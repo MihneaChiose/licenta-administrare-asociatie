@@ -31,6 +31,16 @@ export default async function AdminDashboardPage() {
             </p>
           </Link>
 
+          <Link
+            href="/admin/consumuri"
+            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
+          >
+            <h2 className="font-semibold">Consumuri</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Vizualizare consumuri transmise de locatari.
+            </p>
+          </Link>
+
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="font-semibold">Cheltuieli</h2>
             <p className="mt-2 text-sm text-gray-600">
