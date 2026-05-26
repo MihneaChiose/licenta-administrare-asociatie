@@ -28,7 +28,7 @@ const expenseSchema = z.object({
 
   totalAmount: z.coerce.number().positive("Suma trebuie sa fie pozitiva"),
 
-  distributionMethod: z.nativeEnum(ExpenseDistributionMethod),
+  distributionMethod: z.enum(ExpenseDistributionMethod),
 });
 
 export async function createExpenseAction(formData: FormData) {
