@@ -34,6 +34,12 @@ enum ExpenseDistributionMethod {
   CUSTOM
 }
 
+enum PaymentStatus {
+  PENDING
+  PAID
+  REJECTED
+}
+
 model User {
   id           String      @id @default(cuid())
   name         String
@@ -144,7 +150,7 @@ model Payment {
   invoiceId       String
   amount          Decimal  @db.Decimal(10, 2)
   method          String
-  status          String
+  status          PaymentStatus @default(PENDING)
   stripeSessionId String?
   paidAt          DateTime?
   createdAt       DateTime @default(now())

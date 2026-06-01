@@ -62,6 +62,16 @@ export default async function AdminDashboardPage() {
           </Link>
 
           <Link
+            href="/admin/plati"
+            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
+          >
+            <h2 className="font-semibold">Plati</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Confirmare plati transmise de locatari.
+            </p>
+          </Link>
+
+          <Link
             href="/admin/avizier"
             className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
           >

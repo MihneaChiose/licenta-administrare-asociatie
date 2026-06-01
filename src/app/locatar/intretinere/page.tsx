@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { InvoiceStatus, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { requestPaymentAction } from "./actions";
 
 const monthNames: Record<number, string> = {
   1: "Ianuarie",
@@ -42,7 +43,16 @@ function getStatusClass(status: InvoiceStatus) {
   return "bg-gray-100 text-gray-700";
 }
 
-export default async function TenantInvoicesPage() {
+type TenantInvoicesPageProps = {
+  searchParams: Promise<{
+    error?: string;
+    success?: string;
+  }>;
+};
+
+export default async function TenantInvoicesPage({
+  searchParams,
+}: TenantInvoicesPageProps) {
   const session = await getSession();
 
   if (!session) {
@@ -52,6 +62,8 @@ export default async function TenantInvoicesPage() {
   if (session.role !== UserRole.TENANT) {
     redirect("/admin/dashboard");
   }
+
+  const params = await searchParams;
 
   const apartment = await prisma.apartment.findFirst({
     where: {
@@ -135,6 +147,18 @@ export default async function TenantInvoicesPage() {
           <p className="mt-2 text-gray-600">
             Apartament {apartment.number}, {apartment.association.name}
           </p>
+
+          {params.error && (
+            <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+              {params.error}
+            </div>
+          )}
+
+          {params.success && (
+            <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-700">
+              {params.success}
+            </div>
+          )}
         </div>
 
         <div className="mt-8 grid gap-4 md:grid-cols-3">
@@ -211,6 +235,23 @@ export default async function TenantInvoicesPage() {
                       >
                         {invoiceStatusLabels[invoice.status]}
                       </span>
+
+                      {invoice.status === InvoiceStatus.UNPAID && (
+                        <form action={requestPaymentAction} className="mt-4">
+                          <input
+                            type="hidden"
+                            name="invoiceId"
+                            value={invoice.id}
+                          />
+
+                          <button
+                            type="submit"
+                            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                          >
+                            Trimite cerere de plata
+                          </button>
+                        </form>
+                      )}
                     </div>
                   </div>
 
