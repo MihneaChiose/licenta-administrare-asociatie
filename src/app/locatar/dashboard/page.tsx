@@ -37,7 +37,7 @@ export default async function TenantDashboardPage() {
           >
             <h2 className="font-semibold">Intretinere si plati</h2>
             <p className="mt-2 text-sm text-gray-600">
-              Vezi intretinerea si statusul platilor.
+              Vezi intretinerea si trimite cereri de plata.
             </p>
           </Link>
 
