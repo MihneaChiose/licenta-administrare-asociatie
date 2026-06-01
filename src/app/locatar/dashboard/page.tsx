@@ -42,6 +42,16 @@ export default async function TenantDashboardPage() {
           </Link>
 
           <Link
+            href="/locatar/avizier"
+            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
+          >
+            <h2 className="font-semibold">Avizier virtual</h2>
+            <p className="mt-2 text-sm text-gray-600">
+              Vezi anunturile publicate de administrator.
+            </p>
+          </Link>
+
+          <Link
             href="/locatar/sesizari"
             className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
           >
