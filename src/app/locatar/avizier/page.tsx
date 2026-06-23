@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { TenantLayout } from "@/components/layout/TenantLayout";
 
 export default async function TenantAnnouncementsPage() {
   const session = await getSession();
@@ -26,25 +26,17 @@ export default async function TenantAnnouncementsPage() {
 
   if (!apartment) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-4xl">
-          <Link
-            href="/locatar/dashboard"
-            className="text-sm text-gray-600 hover:text-black"
-          >
-            Inapoi la dashboard
-          </Link>
-
-          <div className="mt-6 rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Avizier virtual
-            </h1>
-            <p className="mt-4 text-gray-600">
-              Nu exista niciun apartament asociat contului tau.
-            </p>
-          </div>
+      <TenantLayout
+        title="Informatii indisponibile"
+        description="Contul tau nu este asociat momentan unui apartament."
+      >
+        <div className="rounded-2xl bg-white p-8 shadow">
+          <p className="text-gray-600">
+            Contul tau nu este asociat niciunui apartament. Contacteaza
+            administratorul asociatiei.
+          </p>
         </div>
-      </main>
+      </TenantLayout>
     );
   }
 
@@ -58,24 +50,11 @@ export default async function TenantAnnouncementsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <TenantLayout
+      title="Avizier virtual"
+      description={`Anunturi pentru Apartamentul ${apartment.number}, ${apartment.association.name}`}
+    >
       <div className="mx-auto max-w-5xl">
-        <Link
-          href="/locatar/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
-        <div className="mt-6">
-          <h1 className="text-3xl font-bold text-gray-900">Avizier virtual</h1>
-
-          <p className="mt-2 text-gray-600">
-            Anunturi pentru Apartamentul {apartment.number},{" "}
-            {apartment.association.name}
-          </p>
-        </div>
-
         <section className="mt-8 rounded-2xl bg-white shadow">
           <div className="border-b border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -116,6 +95,6 @@ export default async function TenantAnnouncementsPage() {
           )}
         </section>
       </div>
-    </main>
+    </TenantLayout>
   );
 }

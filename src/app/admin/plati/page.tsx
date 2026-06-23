@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { PaymentStatus, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { confirmPaymentAction } from "./actions";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 type AdminPaymentsPageProps = {
   searchParams: Promise<{
@@ -96,23 +96,11 @@ export default async function AdminPaymentsPage({
   );
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <AdminLayout
+      title="Plati locatari"
+      description="Confirma platile transmise de locatarii din asociatia administrata."
+    >
       <div className="mx-auto max-w-7xl">
-        <Link
-          href="/admin/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
-        <div className="mt-6">
-          <h1 className="text-3xl font-bold text-gray-900">Plati locatari</h1>
-
-          <p className="mt-2 text-gray-600">
-            Confirma platile transmise de locatarii din asociatia administrata.
-          </p>
-        </div>
-
         {params.error && (
           <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
             {params.error}
@@ -239,6 +227,6 @@ export default async function AdminPaymentsPage({
           )}
         </section>
       </div>
-    </main>
+    </AdminLayout>
   );
 }

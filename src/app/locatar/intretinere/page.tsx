@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { InvoiceStatus, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { requestPaymentAction } from "./actions";
+import { TenantLayout } from "@/components/layout/TenantLayout";
 
 const monthNames: Record<number, string> = {
   1: "Ianuarie",
@@ -76,23 +76,17 @@ export default async function TenantInvoicesPage({
 
   if (!apartment) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-4xl">
-          <Link
-            href="/locatar/dashboard"
-            className="text-sm text-gray-600 hover:text-black"
-          >
-            Inapoi la dashboard
-          </Link>
-
-          <div className="mt-6 rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-2xl font-bold text-gray-900">Intretinere</h1>
-            <p className="mt-4 text-gray-600">
-              Nu exista niciun apartament asociat contului tau.
-            </p>
-          </div>
+      <TenantLayout
+        title="Informatii indisponibile"
+        description="Contul tau nu este asociat momentan unui apartament."
+      >
+        <div className="rounded-2xl bg-white p-8 shadow">
+          <p className="text-gray-600">
+            Contul tau nu este asociat niciunui apartament. Contacteaza
+            administratorul asociatiei.
+          </p>
         </div>
-      </main>
+      </TenantLayout>
     );
   }
 
@@ -132,22 +126,12 @@ export default async function TenantInvoicesPage({
   );
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <TenantLayout
+      title="Intretinerea mea"
+      description={`Facturi si plati pentru Apartamentul ${apartment.number}`}
+    >
       <div className="mx-auto max-w-6xl">
-        <Link
-          href="/locatar/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
         <div className="mt-6">
-          <h1 className="text-3xl font-bold text-gray-900">Intretinerea mea</h1>
-
-          <p className="mt-2 text-gray-600">
-            Apartament {apartment.number}, {apartment.association.name}
-          </p>
-
           {params.error && (
             <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
               {params.error}
@@ -308,6 +292,6 @@ export default async function TenantInvoicesPage({
           )}
         </section>
       </div>
-    </main>
+    </TenantLayout>
   );
 }

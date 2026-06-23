@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 export default async function AdminApartmentsPage() {
   const session = await getSession();
@@ -36,26 +37,12 @@ export default async function AdminApartmentsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <AdminLayout
+      title="Apartamente si locatari"
+      description="Gestioneaza apartamentele din asociatie si locatarii asociati."
+    >
       <div className="mx-auto max-w-6xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <Link
-              href="/admin/dashboard"
-              className="text-sm text-gray-600 hover:text-black"
-            >
-              Inapoi la dashboard
-            </Link>
-
-            <h1 className="mt-4 text-3xl font-bold text-gray-900">
-              Apartamente si locatari
-            </h1>
-
-            <p className="mt-2 text-gray-600">
-              Gestioneaza apartamentele din asociatie si locatarii asociati.
-            </p>
-          </div>
-
+        <div className="flex items-center justify-end">
           <Link
             href="/admin/apartamente/new"
             className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
@@ -125,6 +112,6 @@ export default async function AdminApartmentsPage() {
           )}
         </div>
       </div>
-    </main>
+    </AdminLayout>
   );
 }

@@ -1,8 +1,8 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 const monthNames: Record<number, string> = {
   1: "Ianuarie",
@@ -62,29 +62,12 @@ export default async function AdminConsumptionsPage() {
   });
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <AdminLayout
+      title="Consumuri transmise"
+      description="Vizualizeaza consumurile lunare trimise de locatarii din asociatia administrata."
+    >
       <div className="mx-auto max-w-7xl">
-        <div className="flex items-center justify-between">
-          <div>
-            <Link
-              href="/admin/dashboard"
-              className="text-sm text-gray-600 hover:text-black"
-            >
-              Inapoi la dashboard
-            </Link>
-
-            <h1 className="mt-4 text-3xl font-bold text-gray-900">
-              Consumuri transmise
-            </h1>
-
-            <p className="mt-2 text-gray-600">
-              Vizualizeaza consumurile lunare trimise de locatarii din asociatia
-              administrata.
-            </p>
-          </div>
-        </div>
-
-        <div className="mt-8 rounded-2xl bg-white shadow">
+        <div className="rounded-2xl bg-white shadow">
           <div className="border-b border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900">
               Lista consumuri
@@ -161,6 +144,6 @@ export default async function AdminConsumptionsPage() {
           )}
         </div>
       </div>
-    </main>
+    </AdminLayout>
   );
 }
