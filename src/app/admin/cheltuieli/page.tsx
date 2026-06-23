@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ExpenseDistributionMethod, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { createExpenseAction } from "./actions";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 type ExpensesPageProps = {
   searchParams: Promise<{
@@ -77,24 +77,19 @@ export default async function AdminExpensesPage({
   const currentYear = currentDate.getFullYear();
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <AdminLayout
+      title="Cheltuieli lunare"
+      description="Introdu si vizualizeaza cheltuielile lunare ale asociatiei."
+    >
       <div className="mx-auto max-w-7xl">
-        <Link
-          href="/admin/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.4fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-3xl font-bold text-gray-900">
+            <h2 className="text-lg font-semibold text-gray-900">
               Adauga cheltuiala
-            </h1>
+            </h2>
 
-            <p className="mt-2 text-gray-600">
-              Introdu cheltuielile lunare ale asociatiei. Acestea vor fi
-              folosite ulterior pentru generarea listelor de plata.
+            <p className="mt-1 text-sm text-gray-600">
+              Completeaza datele pentru o cheltuiala lunara.
             </p>
 
             {params.error && (
@@ -287,6 +282,6 @@ export default async function AdminExpensesPage({
           </section>
         </div>
       </div>
-    </main>
+    </AdminLayout>
   );
 }

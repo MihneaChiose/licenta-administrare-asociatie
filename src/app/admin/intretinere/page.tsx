@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { InvoiceStatus, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { generateInvoicesAction } from "./actions";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 type MaintenancePageProps = {
   searchParams: Promise<{
@@ -86,24 +86,19 @@ export default async function AdminMaintenancePage({
   const currentYear = currentDate.getFullYear();
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <AdminLayout
+      title="Generare intretinere"
+      description="Genereaza automat sumele lunare pentru fiecare apartament pe baza cheltuielilor si consumurilor introduse."
+    >
       <div className="mx-auto max-w-7xl">
-        <Link
-          href="/admin/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.5fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Generare intretinere
-            </h1>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Selecteaza perioada
+            </h2>
 
-            <p className="mt-2 text-gray-600">
-              Genereaza automat sumele lunare pentru fiecare apartament pe baza
-              cheltuielilor si consumurilor introduse.
+            <p className="mt-1 text-sm text-gray-600">
+              Alege luna si anul pentru care vrei sa generezi intretinerea.
             </p>
 
             {params.error && (
@@ -227,6 +222,6 @@ export default async function AdminMaintenancePage({
           </section>
         </div>
       </div>
-    </main>
+    </AdminLayout>
   );
 }

@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { createAnnouncementAction } from "./actions";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 
 type AdminAnnouncementsPageProps = {
   searchParams: Promise<{
@@ -42,22 +42,19 @@ export default async function AdminAnnouncementsPage({
   });
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <AdminLayout
+      title="Avizier virtual"
+      description="Publica anunturi vizibile pentru locatarii din asociatia administrata."
+    >
       <div className="mx-auto max-w-6xl">
-        <Link
-          href="/admin/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.3fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-3xl font-bold text-gray-900">Publica anunt</h1>
+            <h2 className="text-lg font-semibold text-gray-900">
+              Publica anunt
+            </h2>
 
-            <p className="mt-2 text-gray-600">
-              Creeaza anunturi vizibile pentru locatarii din asociatia
-              administrata.
+            <p className="mt-1 text-sm text-gray-600">
+              Completeaza titlul si continutul anuntului.
             </p>
 
             {params.error && (
@@ -148,6 +145,6 @@ export default async function AdminAnnouncementsPage({
           </section>
         </div>
       </div>
-    </main>
+    </AdminLayout>
   );
 }
