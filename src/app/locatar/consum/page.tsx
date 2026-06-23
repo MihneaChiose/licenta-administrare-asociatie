@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { submitConsumptionAction } from "./actions";
+import { TenantLayout } from "@/components/layout/TenantLayout";
 
 type ConsumptionPageProps = {
   searchParams: Promise<{
@@ -53,23 +53,17 @@ export default async function ConsumptionPage({
 
   if (!apartment) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-4xl">
-          <Link
-            href="/locatar/dashboard"
-            className="text-sm text-gray-600 hover:text-black"
-          >
-            Inapoi la dashboard
-          </Link>
-
-          <div className="mt-6 rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-2xl font-bold text-gray-900">Consum lunar</h1>
-            <p className="mt-4 text-gray-600">
-              Nu exista niciun apartament asociat contului tau.
-            </p>
-          </div>
+      <TenantLayout
+        title="Informatii indisponibile"
+        description="Contul tau nu este asociat momentan unui apartament."
+      >
+        <div className="rounded-2xl bg-white p-8 shadow">
+          <p className="text-gray-600">
+            Contul tau nu este asociat niciunui apartament. Contacteaza
+            administratorul asociatiei.
+          </p>
         </div>
-      </main>
+      </TenantLayout>
     );
   }
 
@@ -92,25 +86,13 @@ export default async function ConsumptionPage({
   const currentYear = currentDate.getFullYear();
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <TenantLayout
+      title="Transmitere consum"
+      description={`Apartamentul ${apartment.number} - ${apartment.association.name}`}
+    >
       <div className="mx-auto max-w-6xl">
-        <Link
-          href="/locatar/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-3xl font-bold text-gray-900">
-              Transmitere consum
-            </h1>
-
-            <p className="mt-2 text-gray-600">
-              Apartament {apartment.number}, {apartment.association.name}
-            </p>
-
             {params.error && (
               <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
                 {params.error}
@@ -300,6 +282,6 @@ export default async function ConsumptionPage({
           </section>
         </div>
       </div>
-    </main>
+    </TenantLayout>
   );
 }

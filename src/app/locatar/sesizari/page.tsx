@@ -1,9 +1,9 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TicketStatus, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { createTicketAction } from "./actions";
+import { TenantLayout } from "@/components/layout/TenantLayout";
 
 type TenantTicketsPageProps = {
   searchParams: Promise<{
@@ -63,13 +63,6 @@ export default async function TenantTicketsPage({
     return (
       <main className="min-h-screen bg-gray-100 p-8">
         <div className="mx-auto max-w-4xl">
-          <Link
-            href="/locatar/dashboard"
-            className="text-sm text-gray-600 hover:text-black"
-          >
-            Inapoi la dashboard
-          </Link>
-
           <div className="mt-6 rounded-2xl bg-white p-8 shadow">
             <h1 className="text-2xl font-bold text-gray-900">Sesizari</h1>
             <p className="mt-4 text-gray-600">
@@ -91,15 +84,11 @@ export default async function TenantTicketsPage({
   });
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8">
+    <TenantLayout
+      title="Sesizarile mele"
+      description="Trimite si urmareste sesizarile catre administrator."
+    >
       <div className="mx-auto max-w-6xl">
-        <Link
-          href="/locatar/dashboard"
-          className="text-sm text-gray-600 hover:text-black"
-        >
-          Inapoi la dashboard
-        </Link>
-
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.3fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
             <h1 className="text-3xl font-bold text-gray-900">
@@ -159,15 +148,6 @@ export default async function TenantTicketsPage({
           </section>
 
           <section className="rounded-2xl bg-white shadow">
-            <div className="border-b border-gray-200 p-6">
-              <h2 className="text-lg font-semibold text-gray-900">
-                Sesizarile mele
-              </h2>
-              <p className="mt-1 text-sm text-gray-600">
-                Total sesizari: {tickets.length}
-              </p>
-            </div>
-
             {tickets.length === 0 ? (
               <div className="p-6 text-sm text-gray-600">
                 Nu ai trimis inca nicio sesizare.
@@ -209,6 +189,6 @@ export default async function TenantTicketsPage({
           </section>
         </div>
       </div>
-    </main>
+    </TenantLayout>
   );
 }

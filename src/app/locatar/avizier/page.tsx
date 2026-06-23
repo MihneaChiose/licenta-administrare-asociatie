@@ -26,18 +26,17 @@ export default async function TenantAnnouncementsPage() {
 
   if (!apartment) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-4xl">
-          <div className="mt-6 rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-2xl font-bold text-gray-900">
-              Avizier virtual
-            </h1>
-            <p className="mt-4 text-gray-600">
-              Nu exista niciun apartament asociat contului tau.
-            </p>
-          </div>
+      <TenantLayout
+        title="Informatii indisponibile"
+        description="Contul tau nu este asociat momentan unui apartament."
+      >
+        <div className="rounded-2xl bg-white p-8 shadow">
+          <p className="text-gray-600">
+            Contul tau nu este asociat niciunui apartament. Contacteaza
+            administratorul asociatiei.
+          </p>
         </div>
-      </main>
+      </TenantLayout>
     );
   }
 
