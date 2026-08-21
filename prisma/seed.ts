@@ -1,5 +1,9 @@
 import "dotenv/config";
-import { PrismaClient, UserRole } from "../src/generated/prisma/client";
+import {
+  PrismaClient,
+  UserRole,
+  UtilityType,
+} from "../src/generated/prisma/client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import bcrypt from "bcryptjs";
 
@@ -68,6 +72,30 @@ async function main() {
       surface: 55.5,
       numberOfResidents: 2,
     },
+  });
+
+  const utilityTypes: UtilityType[] = [
+    UtilityType.COLD_WATER,
+    UtilityType.HOT_WATER,
+    UtilityType.GAS,
+    UtilityType.ELECTRICITY,
+    UtilityType.HEATING,
+  ];
+
+  const apartments = await prisma.apartment.findMany({
+    select: {
+      id: true,
+    },
+  });
+
+  await prisma.meter.createMany({
+    data: apartments.flatMap((currentApartment) =>
+      utilityTypes.map((utilityType) => ({
+        apartmentId: currentApartment.id,
+        utilityType,
+      })),
+    ),
+    skipDuplicates: true,
   });
 
   console.log("Seed completed");

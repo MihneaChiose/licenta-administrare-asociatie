@@ -3,7 +3,7 @@
 import bcrypt from "bcryptjs";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { UserRole } from "@/generated/prisma/client";
+import { UserRole, UtilityType } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
@@ -117,6 +117,25 @@ export async function createApartmentAction(formData: FormData) {
         floor,
         surface,
         numberOfResidents,
+        meters: {
+          create: [
+            {
+              utilityType: UtilityType.COLD_WATER,
+            },
+            {
+              utilityType: UtilityType.HOT_WATER,
+            },
+            {
+              utilityType: UtilityType.GAS,
+            },
+            {
+              utilityType: UtilityType.ELECTRICITY,
+            },
+            {
+              utilityType: UtilityType.HEATING,
+            },
+          ],
+        },
       },
     });
   });

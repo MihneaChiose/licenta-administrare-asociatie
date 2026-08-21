@@ -40,6 +40,14 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum UtilityType {
+  COLD_WATER
+  HOT_WATER
+  GAS
+  ELECTRICITY
+  HEATING
+}
+
 model User {
   id           String      @id @default(cuid())
   name         String
@@ -81,8 +89,34 @@ model Apartment {
   owner       User        @relation(fields: [ownerId], references: [id])
 
   consumptions Consumption[]
+  meters       Meter[]
   invoices     Invoice[]
   tickets      Ticket[]
+}
+
+model Meter {
+  id          String      @id @default(cuid())
+  apartmentId String
+  utilityType UtilityType
+  createdAt   DateTime    @default(now())
+
+  apartment Apartment      @relation(fields: [apartmentId], references: [id], onDelete: Cascade)
+  readings  MeterReading[]
+
+  @@unique([apartmentId, utilityType])
+}
+
+model MeterReading {
+  id           String   @id @default(cuid())
+  meterId      String
+  month        Int
+  year         Int
+  readingValue Decimal  @db.Decimal(12, 3)
+  submittedAt  DateTime @default(now())
+
+  meter Meter @relation(fields: [meterId], references: [id], onDelete: Cascade)
+
+  @@unique([meterId, month, year])
 }
 
 model Consumption {
