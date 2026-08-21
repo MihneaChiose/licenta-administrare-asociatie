@@ -26,7 +26,7 @@ export function AdminLayout({
           <nav className="mt-8 space-y-1">
             <SidebarLink href="/admin/dashboard" label="Dashboard" />
             <SidebarLink href="/admin/apartamente" label="Apartamente" />
-            <SidebarLink href="/admin/consumuri" label="Consumuri" />
+            <SidebarLink href="/admin/consumuri" label="Indexuri contoare" />
             <SidebarLink href="/admin/cheltuieli" label="Cheltuieli" />
             <SidebarLink href="/admin/intretinere" label="Intretinere" />
             <SidebarLink href="/admin/plati" label="Plati" />
