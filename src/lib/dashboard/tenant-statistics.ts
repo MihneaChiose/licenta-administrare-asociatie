@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import { REQUIRED_METER_COUNT } from "@/lib/meters";
 
 export async function getTenantDashboardStatistics(tenantId: string) {
   const apartment = await prisma.apartment.findFirst({
@@ -21,16 +22,13 @@ export async function getTenantDashboardStatistics(tenantId: string) {
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
-  const currentConsumption = await prisma.consumption.findUnique({
+  const currentMeterReadingCount = await prisma.meterReading.count({
     where: {
-      apartmentId_month_year: {
+      month: currentMonth,
+      year: currentYear,
+      meter: {
         apartmentId: apartment.id,
-        month: currentMonth,
-        year: currentYear,
       },
-    },
-    select: {
-      id: true,
     },
   });
 
@@ -68,7 +66,7 @@ export async function getTenantDashboardStatistics(tenantId: string) {
     apartmentNumber: apartment.number,
     floor: apartment.floor,
     numberOfResidents: apartment.numberOfResidents,
-    consumptionSubmitted: currentConsumption !== null,
+    meterReadingsSubmitted: currentMeterReadingCount === REQUIRED_METER_COUNT,
     currentMaintenanceAmount: currentInvoice?.totalAmount ?? 0,
     currentInvoiceStatus: currentInvoice?.status ?? null,
     unpaidInvoices,

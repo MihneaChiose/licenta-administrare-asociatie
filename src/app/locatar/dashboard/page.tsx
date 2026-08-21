@@ -62,9 +62,11 @@ export default async function TenantDashboardPage() {
           />
 
           <StatisticsCard
-            title="Consum lunar"
-            value={statistics.consumptionSubmitted ? "Transmis" : "Netransmis"}
-            description="Consum pentru luna curentă"
+            title="Indexuri lunare"
+            value={
+              statistics.meterReadingsSubmitted ? "Transmise" : "Netransmise"
+            }
+            description="Indexuri pentru luna curentă"
           />
 
           <StatisticsCard
@@ -99,9 +101,9 @@ export default async function TenantDashboardPage() {
             href="/locatar/consum"
             className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
           >
-            <h2 className="font-semibold">Consum lunar</h2>
+            <h2 className="font-semibold">Indexuri contoare</h2>
             <p className="mt-2 text-sm text-gray-600">
-              Transmite consumul pentru luna curenta.
+              Transmite indexurile contoarelor pentru luna curentă.
             </p>
           </Link>
 

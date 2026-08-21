@@ -25,7 +25,7 @@ export function TenantLayout({
 
           <nav className="mt-8 space-y-1">
             <SidebarLink href="/locatar/dashboard" label="Dashboard" />
-            <SidebarLink href="/locatar/consum" label="Consum lunar" />
+            <SidebarLink href="/locatar/consum" label="Indexuri contoare" />
             <SidebarLink
               href="/locatar/intretinere"
               label="Intretinere si plati"

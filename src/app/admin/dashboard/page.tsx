@@ -106,9 +106,9 @@ export default async function AdminDashboardPage() {
             href="/admin/consumuri"
             className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
           >
-            <h2 className="font-semibold">Consumuri</h2>
+            <h2 className="font-semibold">Indexuri contoare</h2>
             <p className="mt-2 text-sm text-gray-600">
-              Vizualizare consumuri transmise de locatari.
+              Vizualizare indexuri transmise de locatari.
             </p>
           </Link>
 

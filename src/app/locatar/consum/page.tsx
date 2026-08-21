@@ -1,15 +1,23 @@
 import { redirect } from "next/navigation";
-import { UserRole } from "@/generated/prisma/client";
+import { UtilityType, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { submitConsumptionAction } from "./actions";
+import { submitMeterReadingsAction } from "./actions";
 import { TenantLayout } from "@/components/layout/TenantLayout";
+import { METER_UTILITY_CONFIG } from "@/lib/meters";
 
-type ConsumptionPageProps = {
+type MeterReadingsPageProps = {
   searchParams: Promise<{
     error?: string;
     success?: string;
   }>;
+};
+
+type ReadingHistoryRow = {
+  month: number;
+  year: number;
+  submittedAt: Date;
+  values: Partial<Record<UtilityType, string>>;
 };
 
 const monthNames: Record<number, string> = {
@@ -27,9 +35,9 @@ const monthNames: Record<number, string> = {
   12: "Decembrie",
 };
 
-export default async function ConsumptionPage({
+export default async function MeterReadingsPage({
   searchParams,
-}: ConsumptionPageProps) {
+}: MeterReadingsPageProps) {
   const session = await getSession();
 
   if (!session) {
@@ -54,22 +62,35 @@ export default async function ConsumptionPage({
   if (!apartment) {
     return (
       <TenantLayout
-        title="Informatii indisponibile"
-        description="Contul tau nu este asociat momentan unui apartament."
+        title="Informații indisponibile"
+        description="Contul tău nu este asociat momentan unui apartament."
       >
         <div className="rounded-2xl bg-white p-8 shadow">
           <p className="text-gray-600">
-            Contul tau nu este asociat niciunui apartament. Contacteaza
-            administratorul asociatiei.
+            Contul tău nu este asociat niciunui apartament. Contactează
+            administratorul asociației.
           </p>
         </div>
       </TenantLayout>
     );
   }
 
-  const consumptions = await prisma.consumption.findMany({
+  const meterReadings = await prisma.meterReading.findMany({
     where: {
-      apartmentId: apartment.id,
+      meter: {
+        apartmentId: apartment.id,
+      },
+    },
+    select: {
+      month: true,
+      year: true,
+      readingValue: true,
+      submittedAt: true,
+      meter: {
+        select: {
+          utilityType: true,
+        },
+      },
     },
     orderBy: [
       {
@@ -78,7 +99,44 @@ export default async function ConsumptionPage({
       {
         month: "desc",
       },
+      {
+        submittedAt: "desc",
+      },
     ],
+  });
+
+  const historyMap = new Map<string, ReadingHistoryRow>();
+
+  for (const reading of meterReadings) {
+    const key = `${reading.year}-${reading.month}`;
+
+    let historyRow = historyMap.get(key);
+
+    if (!historyRow) {
+      historyRow = {
+        month: reading.month,
+        year: reading.year,
+        submittedAt: reading.submittedAt,
+        values: {},
+      };
+
+      historyMap.set(key, historyRow);
+    }
+
+    historyRow.values[reading.meter.utilityType] =
+      reading.readingValue.toFixed(3);
+
+    if (reading.submittedAt > historyRow.submittedAt) {
+      historyRow.submittedAt = reading.submittedAt;
+    }
+  }
+
+  const readingHistory = Array.from(historyMap.values()).sort((a, b) => {
+    if (a.year !== b.year) {
+      return b.year - a.year;
+    }
+
+    return b.month - a.month;
   });
 
   const currentDate = new Date();
@@ -87,12 +145,22 @@ export default async function ConsumptionPage({
 
   return (
     <TenantLayout
-      title="Transmitere consum"
+      title="Transmitere indexuri"
       description={`Apartamentul ${apartment.number} - ${apartment.association.name}`}
     >
       <div className="mx-auto max-w-6xl">
         <div className="mt-6 grid gap-6 lg:grid-cols-[1fr_1.4fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
+            <div>
+              <h2 className="text-lg font-semibold text-gray-900">
+                Indexuri contoare
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-600">
+                Introdu indexul curent afișat de fiecare contor.
+              </p>
+            </div>
+
             {params.error && (
               <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
                 {params.error}
@@ -105,12 +173,13 @@ export default async function ConsumptionPage({
               </div>
             )}
 
-            <form action={submitConsumptionAction} className="mt-8 space-y-5">
+            <form action={submitMeterReadingsAction} className="mt-8 space-y-5">
               <div className="grid gap-4 md:grid-cols-2">
                 <div>
                   <label className="text-sm font-medium text-gray-700">
                     Luna
                   </label>
+
                   <select
                     name="month"
                     defaultValue={currentMonth}
@@ -128,6 +197,7 @@ export default async function ConsumptionPage({
                   <label className="text-sm font-medium text-gray-700">
                     An
                   </label>
+
                   <input
                     name="year"
                     type="number"
@@ -139,87 +209,30 @@ export default async function ConsumptionPage({
               </div>
 
               <div className="grid gap-4 md:grid-cols-2">
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Apa rece
-                  </label>
-                  <input
-                    name="coldWater"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    defaultValue="0"
-                    required
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                  />
-                </div>
+                {METER_UTILITY_CONFIG.map((utility) => (
+                  <div key={utility.utilityType}>
+                    <label className="text-sm font-medium text-gray-700">
+                      {utility.label} ({utility.unit})
+                    </label>
 
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Apa calda
-                  </label>
-                  <input
-                    name="hotWater"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    defaultValue="0"
-                    required
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Gaze
-                  </label>
-                  <input
-                    name="gas"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    defaultValue="0"
-                    required
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                  />
-                </div>
-
-                <div>
-                  <label className="text-sm font-medium text-gray-700">
-                    Electricitate
-                  </label>
-                  <input
-                    name="electricity"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    defaultValue="0"
-                    required
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                  />
-                </div>
-
-                <div className="md:col-span-2">
-                  <label className="text-sm font-medium text-gray-700">
-                    Caldura
-                  </label>
-                  <input
-                    name="heating"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    defaultValue="0"
-                    required
-                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                  />
-                </div>
+                    <input
+                      name={utility.fieldName}
+                      type="number"
+                      step="0.001"
+                      min="0"
+                      required
+                      placeholder="Index curent"
+                      className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                    />
+                  </div>
+                ))}
               </div>
 
               <button
                 type="submit"
                 className="w-full rounded-lg bg-black px-4 py-2 font-medium text-white hover:bg-gray-800"
               >
-                Trimite consumul
+                Trimite indexurile
               </button>
             </form>
           </section>
@@ -227,16 +240,17 @@ export default async function ConsumptionPage({
           <section className="rounded-2xl bg-white shadow">
             <div className="border-b border-gray-200 p-6">
               <h2 className="text-lg font-semibold text-gray-900">
-                Istoric consumuri
+                Istoric indexuri
               </h2>
+
               <p className="mt-1 text-sm text-gray-600">
-                Consumurile transmise pentru apartamentul tau.
+                Indexurile transmise pentru apartamentul tău.
               </p>
             </div>
 
-            {consumptions.length === 0 ? (
+            {readingHistory.length === 0 ? (
               <div className="p-6 text-sm text-gray-600">
-                Nu ai transmis inca niciun consum.
+                Nu ai transmis încă niciun index.
               </div>
             ) : (
               <div className="overflow-x-auto">
@@ -244,34 +258,42 @@ export default async function ConsumptionPage({
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
                       <th className="px-6 py-3 font-medium">Luna</th>
-                      <th className="px-6 py-3 font-medium">Apa rece</th>
-                      <th className="px-6 py-3 font-medium">Apa calda</th>
-                      <th className="px-6 py-3 font-medium">Gaze</th>
-                      <th className="px-6 py-3 font-medium">Electricitate</th>
-                      <th className="px-6 py-3 font-medium">Caldura</th>
+
+                      {METER_UTILITY_CONFIG.map((utility) => (
+                        <th
+                          key={utility.utilityType}
+                          className="px-6 py-3 font-medium"
+                        >
+                          {utility.label}
+                        </th>
+                      ))}
+
+                      <th className="px-6 py-3 font-medium">Transmis la</th>
                     </tr>
                   </thead>
 
                   <tbody className="divide-y divide-gray-200">
-                    {consumptions.map((consumption) => (
-                      <tr key={consumption.id} className="hover:bg-gray-50">
+                    {readingHistory.map((row) => (
+                      <tr
+                        key={`${row.year}-${row.month}`}
+                        className="hover:bg-gray-50"
+                      >
                         <td className="px-6 py-4 font-medium text-gray-900">
-                          {monthNames[consumption.month]} {consumption.year}
+                          {monthNames[row.month]} {row.year}
                         </td>
+
+                        {METER_UTILITY_CONFIG.map((utility) => (
+                          <td
+                            key={utility.utilityType}
+                            className="px-6 py-4 text-gray-700"
+                          >
+                            {row.values[utility.utilityType] ?? "-"}{" "}
+                            {utility.unit}
+                          </td>
+                        ))}
+
                         <td className="px-6 py-4 text-gray-700">
-                          {consumption.coldWater}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {consumption.hotWater}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {consumption.gas}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {consumption.electricity}
-                        </td>
-                        <td className="px-6 py-4 text-gray-700">
-                          {consumption.heating}
+                          {row.submittedAt.toLocaleDateString("ro-RO")}
                         </td>
                       </tr>
                     ))}
