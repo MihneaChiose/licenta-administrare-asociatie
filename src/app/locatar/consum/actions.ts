@@ -5,7 +5,11 @@ import { z } from "zod";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { METER_UTILITY_CONFIG } from "@/lib/meters";
+import {
+  getNextPeriod,
+  getPreviousPeriod,
+  METER_UTILITY_CONFIG,
+} from "@/lib/meters";
 
 const readingValueSchema = z.preprocess(
   (value) => {
@@ -123,6 +127,86 @@ export async function submitMeterReadingsAction(formData: FormData) {
         "Indexurile pentru această lună au fost deja transmise.",
       )}`,
     );
+  }
+
+  const previousPeriod = getPreviousPeriod(parsed.data.month, parsed.data.year);
+
+  const nextPeriod = getNextPeriod(parsed.data.month, parsed.data.year);
+
+  const meterIds = apartment.meters.map((meter) => meter.id);
+
+  const [previousReadings, nextReadings] = await Promise.all([
+    prisma.meterReading.findMany({
+      where: {
+        meterId: {
+          in: meterIds,
+        },
+        month: previousPeriod.month,
+        year: previousPeriod.year,
+      },
+      select: {
+        meterId: true,
+        readingValue: true,
+      },
+    }),
+
+    prisma.meterReading.findMany({
+      where: {
+        meterId: {
+          in: meterIds,
+        },
+        month: nextPeriod.month,
+        year: nextPeriod.year,
+      },
+      select: {
+        meterId: true,
+        readingValue: true,
+      },
+    }),
+  ]);
+
+  const previousReadingByMeterId = new Map(
+    previousReadings.map((reading) => [
+      reading.meterId,
+      Number(reading.readingValue.toString()),
+    ]),
+  );
+
+  const nextReadingByMeterId = new Map(
+    nextReadings.map((reading) => [
+      reading.meterId,
+      Number(reading.readingValue.toString()),
+    ]),
+  );
+
+  for (const utility of METER_UTILITY_CONFIG) {
+    const meter = meterByUtilityType.get(utility.utilityType);
+
+    if (!meter) {
+      continue;
+    }
+
+    const currentValue = parsed.data[utility.fieldName];
+
+    const previousValue = previousReadingByMeterId.get(meter.id);
+
+    if (previousValue !== undefined && currentValue < previousValue) {
+      redirect(
+        `/locatar/consum?error=${encodeURIComponent(
+          `${utility.label}: indexul curent (${currentValue}) nu poate fi mai mic decât indexul lunii precedente (${previousValue}).`,
+        )}`,
+      );
+    }
+
+    const nextValue = nextReadingByMeterId.get(meter.id);
+
+    if (nextValue !== undefined && currentValue > nextValue) {
+      redirect(
+        `/locatar/consum?error=${encodeURIComponent(
+          `${utility.label}: indexul introdus (${currentValue}) nu poate fi mai mare decât indexul lunii următoare deja transmis (${nextValue}).`,
+        )}`,
+      );
+    }
   }
 
   const readingsToCreate = METER_UTILITY_CONFIG.map((utility) => {
