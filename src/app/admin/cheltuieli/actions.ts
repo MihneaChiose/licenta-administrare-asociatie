@@ -2,31 +2,40 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { ExpenseDistributionMethod, UserRole } from "@/generated/prisma/client";
+import {
+  ExpenseCategory,
+  ExpenseDistributionMethod,
+  UserRole,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import {
+  EXPENSE_CATEGORY_LABELS,
+  getUtilityTypeForExpenseCategory,
+} from "@/lib/expenses";
 
 const expenseSchema = z.object({
   month: z.coerce
     .number()
-    .int("Luna trebuie sa fie numar intreg")
-    .min(1, "Luna trebuie sa fie intre 1 si 12")
-    .max(12, "Luna trebuie sa fie intre 1 si 12"),
+    .int("Luna trebuie să fie număr întreg")
+    .min(1, "Luna trebuie să fie între 1 și 12")
+    .max(12, "Luna trebuie să fie între 1 și 12"),
 
   year: z.coerce
     .number()
-    .int("Anul trebuie sa fie numar intreg")
+    .int("Anul trebuie să fie număr întreg")
     .min(2024, "Anul este prea mic")
     .max(2100, "Anul este prea mare"),
 
-  type: z.string().min(2, "Tipul cheltuielii este obligatoriu"),
+  category: z.enum(ExpenseCategory),
 
   description: z
     .string()
+    .trim()
     .min(2, "Descrierea este obligatorie")
-    .max(255, "Descrierea este prea lunga"),
+    .max(255, "Descrierea este prea lungă"),
 
-  totalAmount: z.coerce.number().positive("Suma trebuie sa fie pozitiva"),
+  totalAmount: z.coerce.number().positive("Suma trebuie să fie pozitivă"),
 
   distributionMethod: z.enum(ExpenseDistributionMethod),
 });
@@ -45,7 +54,7 @@ export async function createExpenseAction(formData: FormData) {
   const parsed = expenseSchema.safeParse({
     month: formData.get("month"),
     year: formData.get("year"),
-    type: formData.get("type"),
+    category: formData.get("category"),
     description: formData.get("description"),
     totalAmount: formData.get("totalAmount"),
     distributionMethod: formData.get("distributionMethod"),
@@ -53,7 +62,22 @@ export async function createExpenseAction(formData: FormData) {
 
   if (!parsed.success) {
     const message = parsed.error.issues[0]?.message ?? "Date invalide";
+
     redirect(`/admin/cheltuieli?error=${encodeURIComponent(message)}`);
+  }
+
+  if (
+    parsed.data.distributionMethod ===
+      ExpenseDistributionMethod.BY_CONSUMPTION &&
+    !getUtilityTypeForExpenseCategory(parsed.data.category)
+  ) {
+    const categoryLabel = EXPENSE_CATEGORY_LABELS[parsed.data.category];
+
+    redirect(
+      `/admin/cheltuieli?error=${encodeURIComponent(
+        `Categoria "${categoryLabel}" nu poate fi repartizată după consumul contoarelor.`,
+      )}`,
+    );
   }
 
   const association = await prisma.association.findFirst({
@@ -65,7 +89,7 @@ export async function createExpenseAction(formData: FormData) {
   if (!association) {
     redirect(
       `/admin/cheltuieli?error=${encodeURIComponent(
-        "Nu exista nicio asociatie administrata de acest cont.",
+        "Nu există nicio asociație administrată de acest cont.",
       )}`,
     );
   }
@@ -75,12 +99,16 @@ export async function createExpenseAction(formData: FormData) {
       associationId: association.id,
       month: parsed.data.month,
       year: parsed.data.year,
-      type: parsed.data.type,
+      category: parsed.data.category,
       description: parsed.data.description,
       totalAmount: parsed.data.totalAmount,
       distributionMethod: parsed.data.distributionMethod,
     },
   });
 
-  redirect("/admin/cheltuieli?success=Cheltuiala a fost adaugata cu succes");
+  redirect(
+    `/admin/cheltuieli?success=${encodeURIComponent(
+      "Cheltuiala a fost adăugată cu succes.",
+    )}`,
+  );
 }

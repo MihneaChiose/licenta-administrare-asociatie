@@ -2,15 +2,15 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import {
-  ExpenseDistributionMethod,
-  UtilityType,
-  UserRole,
-} from "@/generated/prisma/client";
+import { ExpenseDistributionMethod, UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { getPreviousPeriod } from "@/lib/meters";
 import { calculateMonthlyConsumption } from "@/services/consumptions/monthly-consumption";
+import {
+  EXPENSE_CATEGORY_LABELS,
+  getUtilityTypeForExpenseCategory,
+} from "@/lib/expenses";
 
 const generateInvoicesSchema = z.object({
   month: z.coerce
@@ -25,38 +25,6 @@ const generateInvoicesSchema = z.object({
     .min(2024, "Anul este prea mic")
     .max(2100, "Anul este prea mare"),
 });
-
-function getUtilityTypeFromExpenseType(
-  expenseType: string,
-): UtilityType | null {
-  const normalized = expenseType
-    .trim()
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "");
-
-  if (normalized === "apa rece") {
-    return UtilityType.COLD_WATER;
-  }
-
-  if (normalized === "apa calda") {
-    return UtilityType.HOT_WATER;
-  }
-
-  if (normalized === "gaze") {
-    return UtilityType.GAS;
-  }
-
-  if (normalized === "electricitate") {
-    return UtilityType.ELECTRICITY;
-  }
-
-  if (normalized === "caldura") {
-    return UtilityType.HEATING;
-  }
-
-  return null;
-}
 
 function roundToTwoDecimals(value: number) {
   return Math.round(value * 100) / 100;
@@ -350,12 +318,14 @@ export async function generateInvoicesAction(formData: FormData) {
     if (
       expense.distributionMethod === ExpenseDistributionMethod.BY_CONSUMPTION
     ) {
-      const utilityType = getUtilityTypeFromExpenseType(expense.type);
+      const utilityType = getUtilityTypeForExpenseCategory(expense.category);
+
+      const expenseLabel = EXPENSE_CATEGORY_LABELS[expense.category];
 
       if (!utilityType) {
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Cheltuiala "${expense.type}" nu poate fi împărțită după consum.`,
+            `Cheltuiala "${expenseLabel}" nu poate fi împărțită după consum.`,
           )}`,
         );
       }
@@ -399,7 +369,7 @@ export async function generateInvoicesAction(formData: FormData) {
 
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Nu se poate calcula "${expense.type}". Lipseste contorul pentru apartamentele: ${apartmentNumbers}.`,
+            `Nu se poate calcula "${expenseLabel}". Lipseste contorul pentru apartamentele: ${apartmentNumbers}.`,
           )}`,
         );
       }
@@ -415,7 +385,7 @@ export async function generateInvoicesAction(formData: FormData) {
 
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Nu se poate calcula "${expense.type}". Lipsesc indexurile pentru ${month}/${year} la apartamentele: ${apartmentNumbers}.`,
+            `Nu se poate calcula "${expenseLabel}". Lipsesc indexurile pentru ${month}/${year} la apartamentele: ${apartmentNumbers}.`,
           )}`,
         );
       }
@@ -431,7 +401,7 @@ export async function generateInvoicesAction(formData: FormData) {
 
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Nu se poate calcula "${expense.type}". Lipsesc indexurile pentru ${previousPeriod.month}/${previousPeriod.year} la apartamentele: ${apartmentNumbers}.`,
+            `Nu se poate calcula "${expenseLabel}". Lipsesc indexurile pentru ${previousPeriod.month}/${previousPeriod.year} la apartamentele: ${apartmentNumbers}.`,
           )}`,
         );
       }
@@ -447,7 +417,7 @@ export async function generateInvoicesAction(formData: FormData) {
 
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Nu se poate calcula "${expense.type}". Exista indexuri mai mici decat luna precedenta la apartamentele: ${apartmentNumbers}.`,
+            `Nu se poate calcula "${expenseLabel}". Exista indexuri mai mici decat luna precedenta la apartamentele: ${apartmentNumbers}.`,
           )}`,
         );
       }
@@ -460,7 +430,7 @@ export async function generateInvoicesAction(formData: FormData) {
       if (totalConsumption <= 0) {
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Nu se poate calcula "${expense.type}": consumul total este 0.`,
+            `Nu se poate calcula "${expenseLabel}": consumul total este 0.`,
           )}`,
         );
       }

@@ -1,9 +1,17 @@
 import { redirect } from "next/navigation";
-import { ExpenseDistributionMethod, UserRole } from "@/generated/prisma/client";
+import {
+  ExpenseCategory,
+  ExpenseDistributionMethod,
+  UserRole,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { createExpenseAction } from "./actions";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import {
+  EXPENSE_CATEGORY_LABELS,
+  EXPENSE_CATEGORY_OPTIONS,
+} from "@/lib/expenses";
 
 type ExpensesPageProps = {
   searchParams: Promise<{
@@ -139,24 +147,18 @@ export default async function AdminExpensesPage({
 
               <div>
                 <label className="text-sm font-medium text-gray-700">
-                  Tip cheltuiala
+                  Categorie cheltuiala
                 </label>
                 <select
-                  name="type"
+                  name="category"
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                  defaultValue="Apa rece"
+                  defaultValue={ExpenseCategory.COLD_WATER}
                 >
-                  <option value="Apa rece">Apa rece</option>
-                  <option value="Apa calda">Apa calda</option>
-                  <option value="Gaze">Gaze</option>
-                  <option value="Electricitate">Electricitate</option>
-                  <option value="Caldura">Caldura</option>
-                  <option value="Curatenie">Curatenie</option>
-                  <option value="Lift">Lift</option>
-                  <option value="Fond rulment">Fond rulment</option>
-                  <option value="Fond reparatii">Fond reparatii</option>
-                  <option value="Administrare">Administrare</option>
-                  <option value="Altele">Altele</option>
+                  {EXPENSE_CATEGORY_OPTIONS.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -213,6 +215,11 @@ export default async function AdminExpensesPage({
                     Custom
                   </option>
                 </select>
+                <p className="mt-1 text-xs text-gray-500">
+                  Metoda „După consum” poate fi utilizată doar pentru
+                  utilitățile care au contor: apă rece, apă caldă, gaze,
+                  electricitate și căldură.
+                </p>
               </div>
 
               <button
@@ -244,7 +251,7 @@ export default async function AdminExpensesPage({
                   <thead className="bg-gray-50 text-gray-600">
                     <tr>
                       <th className="px-6 py-3 font-medium">Luna</th>
-                      <th className="px-6 py-3 font-medium">Tip</th>
+                      <th className="px-6 py-3 font-medium">Categorie</th>
                       <th className="px-6 py-3 font-medium">Descriere</th>
                       <th className="px-6 py-3 font-medium">Suma</th>
                       <th className="px-6 py-3 font-medium">Impartire</th>
@@ -259,7 +266,7 @@ export default async function AdminExpensesPage({
                         </td>
 
                         <td className="px-6 py-4 text-gray-700">
-                          {expense.type}
+                          {EXPENSE_CATEGORY_LABELS[expense.category]}
                         </td>
 
                         <td className="px-6 py-4 text-gray-700">
