@@ -88,7 +88,7 @@ export default async function AdminMaintenancePage({
   return (
     <AdminLayout
       title="Generare intretinere"
-      description="Genereaza automat sumele lunare pentru fiecare apartament pe baza cheltuielilor si consumurilor introduse."
+      description="Generează automat sumele lunare pentru fiecare apartament pe baza cheltuielilor și consumurilor calculate din indexurile contoarelor."
     >
       <div className="mx-auto max-w-7xl">
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.8fr_1.5fr]">

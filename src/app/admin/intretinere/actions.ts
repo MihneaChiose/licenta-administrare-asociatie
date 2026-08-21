@@ -2,9 +2,15 @@
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { ExpenseDistributionMethod, UserRole } from "@/generated/prisma/client";
+import {
+  ExpenseDistributionMethod,
+  UtilityType,
+  UserRole,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
+import { getPreviousPeriod } from "@/lib/meters";
+import { calculateMonthlyConsumption } from "@/services/consumptions/monthly-consumption";
 
 const generateInvoicesSchema = z.object({
   month: z.coerce
@@ -20,34 +26,33 @@ const generateInvoicesSchema = z.object({
     .max(2100, "Anul este prea mare"),
 });
 
-type ConsumptionField =
-  | "coldWater"
-  | "hotWater"
-  | "gas"
-  | "electricity"
-  | "heating";
-
-function getConsumptionField(expenseType: string): ConsumptionField | null {
-  const normalized = expenseType.trim().toLowerCase();
+function getUtilityTypeFromExpenseType(
+  expenseType: string,
+): UtilityType | null {
+  const normalized = expenseType
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "");
 
   if (normalized === "apa rece") {
-    return "coldWater";
+    return UtilityType.COLD_WATER;
   }
 
   if (normalized === "apa calda") {
-    return "hotWater";
+    return UtilityType.HOT_WATER;
   }
 
   if (normalized === "gaze") {
-    return "gas";
+    return UtilityType.GAS;
   }
 
   if (normalized === "electricitate") {
-    return "electricity";
+    return UtilityType.ELECTRICITY;
   }
 
   if (normalized === "caldura") {
-    return "heating";
+    return UtilityType.HEATING;
   }
 
   return null;
@@ -116,15 +121,29 @@ export async function generateInvoicesAction(formData: FormData) {
     );
   }
 
+  const previousPeriod = getPreviousPeriod(month, year);
+
   const apartments = await prisma.apartment.findMany({
     where: {
       associationId: association.id,
     },
     include: {
-      consumptions: {
-        where: {
-          month,
-          year,
+      meters: {
+        include: {
+          readings: {
+            where: {
+              OR: [
+                {
+                  month,
+                  year,
+                },
+                {
+                  month: previousPeriod.month,
+                  year: previousPeriod.year,
+                },
+              ],
+            },
+          },
         },
       },
     },
@@ -331,20 +350,112 @@ export async function generateInvoicesAction(formData: FormData) {
     if (
       expense.distributionMethod === ExpenseDistributionMethod.BY_CONSUMPTION
     ) {
-      const consumptionField = getConsumptionField(expense.type);
+      const utilityType = getUtilityTypeFromExpenseType(expense.type);
 
-      if (!consumptionField) {
+      if (!utilityType) {
         redirect(
           `/admin/intretinere?error=${encodeURIComponent(
-            `Cheltuiala "${expense.type}" nu poate fi impartita dupa consum.`,
+            `Cheltuiala "${expense.type}" nu poate fi împărțită după consum.`,
           )}`,
         );
       }
 
-      const totalConsumption = apartments.reduce((sum, apartment) => {
-        const consumption = apartment.consumptions[0];
-        return sum + (consumption ? consumption[consumptionField] : 0);
-      }, 0);
+      const calculatedConsumptions = apartments.map((apartment) => {
+        const meter = apartment.meters.find(
+          (currentMeter) => currentMeter.utilityType === utilityType,
+        );
+
+        if (!meter) {
+          return {
+            apartment,
+            hasMeter: false,
+            currentReading: null,
+            previousReading: null,
+            consumption: null,
+          };
+        }
+
+        const calculation = calculateMonthlyConsumption(
+          meter.readings,
+          month,
+          year,
+        );
+
+        return {
+          apartment,
+          hasMeter: true,
+          ...calculation,
+        };
+      });
+
+      const apartmentsWithoutMeter = calculatedConsumptions.filter(
+        (item) => !item.hasMeter,
+      );
+
+      if (apartmentsWithoutMeter.length > 0) {
+        const apartmentNumbers = apartmentsWithoutMeter
+          .map((item) => item.apartment.number)
+          .join(", ");
+
+        redirect(
+          `/admin/intretinere?error=${encodeURIComponent(
+            `Nu se poate calcula "${expense.type}". Lipseste contorul pentru apartamentele: ${apartmentNumbers}.`,
+          )}`,
+        );
+      }
+
+      const apartmentsWithoutCurrentReading = calculatedConsumptions.filter(
+        (item) => item.currentReading === null,
+      );
+
+      if (apartmentsWithoutCurrentReading.length > 0) {
+        const apartmentNumbers = apartmentsWithoutCurrentReading
+          .map((item) => item.apartment.number)
+          .join(", ");
+
+        redirect(
+          `/admin/intretinere?error=${encodeURIComponent(
+            `Nu se poate calcula "${expense.type}". Lipsesc indexurile pentru ${month}/${year} la apartamentele: ${apartmentNumbers}.`,
+          )}`,
+        );
+      }
+
+      const apartmentsWithoutPreviousReading = calculatedConsumptions.filter(
+        (item) => item.previousReading === null,
+      );
+
+      if (apartmentsWithoutPreviousReading.length > 0) {
+        const apartmentNumbers = apartmentsWithoutPreviousReading
+          .map((item) => item.apartment.number)
+          .join(", ");
+
+        redirect(
+          `/admin/intretinere?error=${encodeURIComponent(
+            `Nu se poate calcula "${expense.type}". Lipsesc indexurile pentru ${previousPeriod.month}/${previousPeriod.year} la apartamentele: ${apartmentNumbers}.`,
+          )}`,
+        );
+      }
+
+      const invalidConsumptions = calculatedConsumptions.filter(
+        (item) => item.consumption !== null && item.consumption < 0,
+      );
+
+      if (invalidConsumptions.length > 0) {
+        const apartmentNumbers = invalidConsumptions
+          .map((item) => item.apartment.number)
+          .join(", ");
+
+        redirect(
+          `/admin/intretinere?error=${encodeURIComponent(
+            `Nu se poate calcula "${expense.type}". Exista indexuri mai mici decat luna precedenta la apartamentele: ${apartmentNumbers}.`,
+          )}`,
+        );
+      }
+
+      const totalConsumption = calculatedConsumptions.reduce(
+        (sum, item) => sum + (item.consumption ?? 0),
+        0,
+      );
 
       if (totalConsumption <= 0) {
         redirect(
@@ -354,40 +465,54 @@ export async function generateInvoicesAction(formData: FormData) {
         );
       }
 
+      const apartmentsWithPositiveConsumption = calculatedConsumptions.filter(
+        (item) => (item.consumption ?? 0) > 0,
+      );
+
+      const lastApartmentWithConsumption =
+        apartmentsWithPositiveConsumption[
+          apartmentsWithPositiveConsumption.length - 1
+        ];
+
       let alreadyAllocated = 0;
 
-      apartments.forEach((apartment, index) => {
-        const consumption = apartment.consumptions[0];
-        const apartmentConsumption = consumption
-          ? consumption[consumptionField]
-          : 0;
+      for (const item of calculatedConsumptions) {
+        const apartmentConsumption = item.consumption ?? 0;
 
-        const isLast = index === apartments.length - 1;
+        let amount = 0;
 
-        const amount = isLast
-          ? roundToTwoDecimals(totalAmount - alreadyAllocated)
-          : roundToTwoDecimals(
-              (totalAmount * apartmentConsumption) / totalConsumption,
-            );
+        if (apartmentConsumption > 0) {
+          const isLastApartmentWithConsumption =
+            item.apartment.id === lastApartmentWithConsumption?.apartment.id;
 
-        alreadyAllocated += amount;
+          amount = isLastApartmentWithConsumption
+            ? roundToTwoDecimals(totalAmount - alreadyAllocated)
+            : roundToTwoDecimals(
+                (totalAmount * apartmentConsumption) / totalConsumption,
+              );
+
+          alreadyAllocated += amount;
+        }
 
         const targetInvoice = invoiceData.find(
-          (invoice) => invoice.apartmentId === apartment.id,
+          (invoice) => invoice.apartmentId === item.apartment.id,
         );
 
         if (!targetInvoice) {
-          return;
+          continue;
         }
 
         targetInvoice.totalAmount += amount;
+
         targetInvoice.items.push({
-          description: expense.description,
+          description: `${expense.description} - consum ${apartmentConsumption.toFixed(
+            3,
+          )}`,
           amount,
           sourceType: "EXPENSE",
           sourceId: expense.id,
         });
-      });
+      }
     }
   }
 

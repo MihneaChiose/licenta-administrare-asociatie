@@ -34,3 +34,36 @@ export const METER_UTILITY_CONFIG = [
 ] as const;
 
 export const REQUIRED_METER_COUNT = METER_UTILITY_CONFIG.length;
+
+export type MonthPeriod = {
+  month: number;
+  year: number;
+};
+
+export function getPreviousPeriod(month: number, year: number): MonthPeriod {
+  if (month === 1) {
+    return {
+      month: 12,
+      year: year - 1,
+    };
+  }
+
+  return {
+    month: month - 1,
+    year,
+  };
+}
+
+export function getNextPeriod(month: number, year: number): MonthPeriod {
+  if (month === 12) {
+    return {
+      month: 1,
+      year: year + 1,
+    };
+  }
+
+  return {
+    month: month + 1,
+    year,
+  };
+}
