@@ -9,6 +9,10 @@ import { getSession } from "@/lib/session";
 import { calculateMaintenance } from "@/services/maintenance/calculate-maintenance";
 import { MaintenanceCalculationError } from "@/services/maintenance/errors";
 import { toMoneyString } from "@/services/maintenance/utils";
+import {
+  formatMaintenanceValidationIssues,
+  validateMaintenanceGeneration,
+} from "@/services/maintenance/validate-maintenance";
 
 const generateInvoicesSchema = z.object({
   month: z.coerce
@@ -140,6 +144,22 @@ export async function generateInvoicesAction(formData: FormData) {
       `/admin/intretinere?error=${encodeURIComponent(
         "Nu există cheltuieli introduse pentru luna selectată.",
       )}`,
+    );
+  }
+
+  const validationIssues = validateMaintenanceGeneration({
+    apartments,
+    expenses,
+    month,
+    year,
+  });
+
+  if (validationIssues.length > 0) {
+    const validationMessage =
+      formatMaintenanceValidationIssues(validationIssues);
+
+    redirect(
+      `/admin/intretinere?error=${encodeURIComponent(validationMessage)}`,
     );
   }
 

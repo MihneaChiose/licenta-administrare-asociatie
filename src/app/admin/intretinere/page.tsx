@@ -102,7 +102,7 @@ export default async function AdminMaintenancePage({
             </p>
 
             {params.error && (
-              <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+              <div className="mt-6 whitespace-pre-line rounded-lg bg-red-50 p-4 text-sm text-red-700">
                 {params.error}
               </div>
             )}
@@ -151,10 +151,17 @@ export default async function AdminMaintenancePage({
             </form>
 
             <div className="mt-6 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
-              <p className="font-medium text-gray-800">Atentie:</p>
+              <p className="font-medium text-gray-800">Înainte de generare</p>
+
               <p className="mt-1">
-                Dupa generare, sumele sunt salvate in facturi lunare. Pentru
-                moment, sistemul nu permite regenerarea aceleiasi luni.
+                Platforma verifică automat datele necesare calculului. Dacă
+                există mai multe probleme, acestea vor fi afișate împreună și nu
+                va fi generată nicio factură.
+              </p>
+
+              <p className="mt-2">
+                După generare, sumele sunt salvate în facturi lunare. Pentru
+                moment, sistemul nu permite regenerarea aceleiași luni.
               </p>
             </div>
           </section>
