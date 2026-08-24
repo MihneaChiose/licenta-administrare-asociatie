@@ -1,5 +1,9 @@
 import { redirect } from "next/navigation";
-import { InvoiceStatus, UserRole } from "@/generated/prisma/client";
+import {
+  InvoiceStatus,
+  MaintenanceListStatus,
+  UserRole,
+} from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { requestPaymentAction } from "./actions";
@@ -93,13 +97,27 @@ export default async function TenantInvoicesPage({
   const invoices = await prisma.invoice.findMany({
     where: {
       apartmentId: apartment.id,
+
+      maintenanceList: {
+        status: {
+          in: [MaintenanceListStatus.PUBLISHED, MaintenanceListStatus.CLOSED],
+        },
+      },
     },
     include: {
+      maintenanceList: {
+        select: {
+          publishedAt: true,
+          status: true,
+        },
+      },
+
       items: {
         orderBy: {
           description: "asc",
         },
       },
+
       payments: {
         orderBy: {
           createdAt: "desc",

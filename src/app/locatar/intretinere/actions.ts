@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import {
   InvoiceStatus,
+  MaintenanceListStatus,
   PaymentStatus,
   UserRole,
 } from "@/generated/prisma/client";
@@ -37,8 +38,15 @@ export async function requestPaymentAction(formData: FormData) {
   const invoice = await prisma.invoice.findFirst({
     where: {
       id: parsed.data.invoiceId,
+
       apartment: {
         ownerId: session.id,
+      },
+
+      maintenanceList: {
+        status: {
+          in: [MaintenanceListStatus.PUBLISHED, MaintenanceListStatus.CLOSED],
+        },
       },
     },
     include: {
