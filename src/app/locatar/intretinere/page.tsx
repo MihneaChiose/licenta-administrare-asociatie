@@ -8,6 +8,7 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { requestPaymentAction } from "./actions";
 import { TenantLayout } from "@/components/layout/TenantLayout";
+import { InvoiceCalculationDetails } from "@/components/maintenance/InvoiceCalculationDetails";
 
 const monthNames: Record<number, string> = {
   1: "Ianuarie",
@@ -257,30 +258,19 @@ export default async function TenantInvoicesPage({
                     </div>
                   </div>
 
-                  <div className="mt-6 overflow-x-auto">
-                    <table className="w-full text-left text-sm">
-                      <thead className="bg-gray-50 text-gray-600">
-                        <tr>
-                          <th className="px-4 py-3 font-medium">Descriere</th>
-                          <th className="px-4 py-3 text-right font-medium">
-                            Suma
-                          </th>
-                        </tr>
-                      </thead>
+                  <div className="mt-6">
+                    <div className="mb-4">
+                      <h4 className="font-semibold text-gray-900">
+                        Detalierea întreținerii
+                      </h4>
 
-                      <tbody className="divide-y divide-gray-200">
-                        {invoice.items.map((item) => (
-                          <tr key={item.id}>
-                            <td className="px-4 py-3 text-gray-700">
-                              {item.description}
-                            </td>
-                            <td className="px-4 py-3 text-right font-medium text-gray-900">
-                              {item.amount.toString()} RON
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Vezi baza și metoda folosite pentru calculul fiecărei
+                        poziții.
+                      </p>
+                    </div>
+
+                    <InvoiceCalculationDetails items={invoice.items} />
                   </div>
 
                   {invoice.payments.length > 0 && (
