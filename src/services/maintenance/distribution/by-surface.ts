@@ -1,6 +1,6 @@
 import { MaintenanceCalculationError } from "../errors";
-import { ExpenseAllocation, DistributionContext } from "../types";
-import { allocateByWeight } from "../utils";
+import { DistributionContext, ExpenseAllocation } from "../types";
+import { allocateByWeight, calculateSharePercentage } from "../utils";
 
 export function distributeBySurface({
   apartments,
@@ -29,7 +29,23 @@ export function distributeBySurface({
 
   return apartments.map((apartment) => ({
     apartmentId: apartment.id,
+
     amount: allocations.get(apartment.id) ?? 0,
+
     description: expense.description,
+
+    expenseCategory: expense.category,
+
+    distributionMethod: expense.distributionMethod,
+
+    sourceAmount: totalAmount,
+
+    basisValue: apartment.surface,
+
+    basisTotal: totalSurface,
+
+    basisUnit: "m²",
+
+    sharePercentage: calculateSharePercentage(apartment.surface, totalSurface),
   }));
 }

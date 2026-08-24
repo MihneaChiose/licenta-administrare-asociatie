@@ -1,4 +1,24 @@
-import { ExpenseCategory, UtilityType } from "@/generated/prisma/client";
+import {
+  ExpenseCategory,
+  ExpenseDistributionMethod,
+  UtilityType,
+} from "@/generated/prisma/client";
+
+export const EXPENSE_DISTRIBUTION_METHOD_LABELS: Record<
+  ExpenseDistributionMethod,
+  string
+> = {
+  [ExpenseDistributionMethod.PER_APARTMENT]: "Per apartament",
+
+  [ExpenseDistributionMethod.PER_PERSON]: "Per persoană",
+
+  [ExpenseDistributionMethod.BY_CONSUMPTION]: "După consum",
+
+  [ExpenseDistributionMethod.BY_SURFACE]: "După suprafață",
+
+  [ExpenseDistributionMethod.CUSTOM]:
+    "Personalizat (repartizare egală momentan)",
+};
 
 export const EXPENSE_CATEGORY_LABELS: Record<ExpenseCategory, string> = {
   [ExpenseCategory.COLD_WATER]: "Apă rece",

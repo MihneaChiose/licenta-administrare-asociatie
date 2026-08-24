@@ -68,3 +68,16 @@ export function allocateByWeight(
 
   return allocations;
 }
+
+export function calculateSharePercentage(
+  basisValue: number,
+  basisTotal: number,
+) {
+  if (basisTotal <= 0) {
+    return 0;
+  }
+
+  const percentage = (basisValue / basisTotal) * 100;
+
+  return Math.round(percentage * 1_000_000) / 1_000_000;
+}

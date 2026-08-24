@@ -74,8 +74,23 @@ export function calculateMaintenance({
       invoice.items.push({
         description: allocation.description,
         amount: allocation.amount,
+
         sourceType: "EXPENSE",
         sourceId: expense.id,
+
+        expenseCategory: allocation.expenseCategory,
+
+        distributionMethod: allocation.distributionMethod,
+
+        sourceAmount: allocation.sourceAmount,
+
+        basisValue: allocation.basisValue,
+
+        basisTotal: allocation.basisTotal,
+
+        basisUnit: allocation.basisUnit,
+
+        sharePercentage: allocation.sharePercentage,
       });
 
       invoice.totalAmount = roundToTwoDecimals(

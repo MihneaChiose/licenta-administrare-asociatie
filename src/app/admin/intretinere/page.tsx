@@ -12,6 +12,7 @@ import {
   publishMaintenanceListAction,
 } from "./actions";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { InvoiceCalculationDetails } from "@/components/maintenance/InvoiceCalculationDetails";
 
 type MaintenancePageProps = {
   searchParams: Promise<{
@@ -430,7 +431,17 @@ export default async function AdminMaintenancePage({
                                   </td>
 
                                   <td className="px-6 py-4 text-gray-700">
-                                    {invoice.items.length}
+                                    <details>
+                                      <summary className="cursor-pointer font-medium text-gray-900 hover:underline">
+                                        {invoice.items.length} poziții
+                                      </summary>
+
+                                      <div className="mt-4 w-full min-w-0 max-w-2xl overflow-hidden">
+                                        <InvoiceCalculationDetails
+                                          items={invoice.items}
+                                        />
+                                      </div>
+                                    </details>
                                   </td>
                                 </tr>
                               ))}

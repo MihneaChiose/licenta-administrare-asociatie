@@ -67,3 +67,10 @@ export function getNextPeriod(month: number, year: number): MonthPeriod {
     year,
   };
 }
+
+export function getMeterUtilityConfig(utilityType: UtilityType) {
+  return (
+    METER_UTILITY_CONFIG.find((config) => config.utilityType === utilityType) ??
+    null
+  );
+}
