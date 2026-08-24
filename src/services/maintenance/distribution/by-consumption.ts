@@ -2,11 +2,11 @@ import {
   EXPENSE_CATEGORY_LABELS,
   getUtilityTypeForExpenseCategory,
 } from "@/lib/expenses";
-import { getPreviousPeriod } from "@/lib/meters";
+import { getPreviousPeriod, getMeterUtilityConfig } from "@/lib/meters";
 import { calculateMonthlyConsumption } from "@/services/consumptions/monthly-consumption";
 import { MaintenanceCalculationError } from "../errors";
 import { DistributionContext, ExpenseAllocation } from "../types";
-import { allocateByWeight } from "../utils";
+import { allocateByWeight, calculateSharePercentage } from "../utils";
 
 export function distributeByConsumption({
   apartments,
@@ -123,6 +123,10 @@ export function distributeByConsumption({
 
   const totalAmount = Number(expense.totalAmount.toString());
 
+  const meterConfig = getMeterUtilityConfig(utilityType);
+
+  const basisUnit = meterConfig?.unit ?? "unități";
+
   const allocations = allocateByWeight(
     calculatedConsumptions.map((item) => ({
       id: item.apartment.id,
@@ -134,11 +138,29 @@ export function distributeByConsumption({
     },
   );
 
-  return calculatedConsumptions.map((item) => ({
-    apartmentId: item.apartment.id,
-    amount: allocations.get(item.apartment.id) ?? 0,
-    description: `${expense.description} - consum ${(
-      item.consumption ?? 0
-    ).toFixed(3)}`,
-  }));
+  return calculatedConsumptions.map((item) => {
+    const consumption = item.consumption ?? 0;
+
+    return {
+      apartmentId: item.apartment.id,
+
+      amount: allocations.get(item.apartment.id) ?? 0,
+
+      description: `${expense.description} - consum ${consumption.toFixed(3)}`,
+
+      expenseCategory: expense.category,
+
+      distributionMethod: expense.distributionMethod,
+
+      sourceAmount: totalAmount,
+
+      basisValue: consumption,
+
+      basisTotal: totalConsumption,
+
+      basisUnit,
+
+      sharePercentage: calculateSharePercentage(consumption, totalConsumption),
+    };
+  });
 }

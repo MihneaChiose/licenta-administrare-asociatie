@@ -35,13 +35,26 @@ export type MaintenanceExpense = {
   distributionMethod: ExpenseDistributionMethod;
 };
 
-export type ExpenseAllocation = {
+export type CalculationSnapshot = {
+  expenseCategory: ExpenseCategory;
+  distributionMethod: ExpenseDistributionMethod;
+
+  sourceAmount: number;
+
+  basisValue: number;
+  basisTotal: number;
+  basisUnit: string;
+
+  sharePercentage: number;
+};
+
+export type ExpenseAllocation = CalculationSnapshot & {
   apartmentId: string;
   amount: number;
   description: string;
 };
 
-export type InvoiceItemDraft = {
+export type InvoiceItemDraft = CalculationSnapshot & {
   description: string;
   amount: number;
   sourceType: string;

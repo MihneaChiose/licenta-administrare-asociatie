@@ -1,6 +1,6 @@
 import { MaintenanceCalculationError } from "../errors";
-import { ExpenseAllocation, DistributionContext } from "../types";
-import { allocateByWeight } from "../utils";
+import { DistributionContext, ExpenseAllocation } from "../types";
+import { allocateByWeight, calculateSharePercentage } from "../utils";
 
 export function distributePerPerson({
   apartments,
@@ -29,7 +29,26 @@ export function distributePerPerson({
 
   return apartments.map((apartment) => ({
     apartmentId: apartment.id,
+
     amount: allocations.get(apartment.id) ?? 0,
+
     description: expense.description,
+
+    expenseCategory: expense.category,
+
+    distributionMethod: expense.distributionMethod,
+
+    sourceAmount: totalAmount,
+
+    basisValue: apartment.numberOfResidents,
+
+    basisTotal: totalResidents,
+
+    basisUnit: "persoane",
+
+    sharePercentage: calculateSharePercentage(
+      apartment.numberOfResidents,
+      totalResidents,
+    ),
   }));
 }

@@ -219,10 +219,18 @@ model InvoiceItem {
   invoiceId   String
   description String
   amount      Decimal @db.Decimal(10, 2)
-  sourceType  String?
+  sourceType  String
   sourceId    String?
 
-  invoice Invoice @relation(fields: [invoiceId], references: [id])
+  expenseCategory     ExpenseCategory?
+  distributionMethod  ExpenseDistributionMethod?
+  sourceAmount        Decimal? @db.Decimal(10, 2)
+  basisValue          Decimal? @db.Decimal(14, 3)
+  basisTotal          Decimal? @db.Decimal(14, 3)
+  sharePercentage     Decimal? @db.Decimal(9, 6)
+  basisUnit           String?
+
+  invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
 model Payment {

@@ -277,9 +277,26 @@ export async function calculateMaintenanceListAction(formData: FormData) {
           items: {
             create: invoice.items.map((item) => ({
               description: item.description,
+
               amount: toMoneyString(item.amount),
+
               sourceType: item.sourceType,
+
               sourceId: item.sourceId,
+
+              expenseCategory: item.expenseCategory,
+
+              distributionMethod: item.distributionMethod,
+
+              sourceAmount: toMoneyString(item.sourceAmount),
+
+              basisValue: item.basisValue.toFixed(3),
+
+              basisTotal: item.basisTotal.toFixed(3),
+
+              basisUnit: item.basisUnit,
+
+              sharePercentage: item.sharePercentage.toFixed(6),
             })),
           },
         },
