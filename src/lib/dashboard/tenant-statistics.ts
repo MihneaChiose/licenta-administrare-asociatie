@@ -1,5 +1,11 @@
 import { prisma } from "@/lib/prisma";
 import { REQUIRED_METER_COUNT } from "@/lib/meters";
+import { MaintenanceListStatus } from "@/generated/prisma/client";
+
+const visibleMaintenanceStatuses = [
+  MaintenanceListStatus.PUBLISHED,
+  MaintenanceListStatus.CLOSED,
+];
 
 export async function getTenantDashboardStatistics(tenantId: string) {
   const apartment = await prisma.apartment.findFirst({
@@ -32,14 +38,19 @@ export async function getTenantDashboardStatistics(tenantId: string) {
     },
   });
 
-  const currentInvoice = await prisma.invoice.findUnique({
+  const currentInvoice = await prisma.invoice.findFirst({
     where: {
-      apartmentId_month_year: {
-        apartmentId: apartment.id,
-        month: currentMonth,
-        year: currentYear,
+      apartmentId: apartment.id,
+      month: currentMonth,
+      year: currentYear,
+
+      maintenanceList: {
+        status: {
+          in: visibleMaintenanceStatuses,
+        },
       },
     },
+
     select: {
       totalAmount: true,
       status: true,
@@ -50,6 +61,12 @@ export async function getTenantDashboardStatistics(tenantId: string) {
     where: {
       apartmentId: apartment.id,
       status: "UNPAID",
+
+      maintenanceList: {
+        status: {
+          in: visibleMaintenanceStatuses,
+        },
+      },
     },
   });
 

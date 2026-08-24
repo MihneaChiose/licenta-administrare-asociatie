@@ -63,6 +63,13 @@ enum UtilityType {
   HEATING
 }
 
+enum MaintenanceListStatus {
+  DRAFT
+  CALCULATED
+  PUBLISHED
+  CLOSED
+}
+
 model User {
   id           String      @id @default(cuid())
   name         String
@@ -85,9 +92,10 @@ model Association {
 
   admin User @relation("AssociationAdmin", fields: [adminId], references: [id])
 
-  apartments    Apartment[]
-  expenses      Expense[]
-  announcements Announcement[]
+  apartments        Apartment[]
+  expenses          Expense[]
+  announcements     Announcement[]
+  maintenanceLists  MaintenanceList[]
 }
 
 model Apartment {
@@ -165,22 +173,45 @@ model Expense {
   association Association @relation(fields: [associationId], references: [id])
 }
 
-model Invoice {
-  id          String        @id @default(cuid())
-  apartmentId String
-  month       Int
-  year        Int
-  totalAmount Decimal       @db.Decimal(10, 2)
-  status      InvoiceStatus @default(UNPAID)
-  generatedAt DateTime      @default(now())
-  paidAt      DateTime?
+model MaintenanceList {
+  id            String                @id @default(cuid())
+  associationId String
+  month         Int
+  year          Int
+  status        MaintenanceListStatus @default(DRAFT)
+  createdAt     DateTime              @default(now())
+  updatedAt     DateTime              @updatedAt
+  calculatedAt  DateTime?
+  publishedAt   DateTime?
+  closedAt      DateTime?
 
-  apartment Apartment @relation(fields: [apartmentId], references: [id])
+  association Association @relation(fields: [associationId], references: [id])
+
+  invoices Invoice[]
+
+  @@unique([associationId, month, year])
+}
+
+model Invoice {
+  id                String        @id @default(cuid())
+  maintenanceListId String
+  apartmentId       String
+  month             Int
+  year              Int
+  totalAmount       Decimal       @db.Decimal(10, 2)
+  status            InvoiceStatus @default(UNPAID)
+  generatedAt       DateTime      @default(now())
+  paidAt            DateTime?
+
+  maintenanceList MaintenanceList @relation(fields: [maintenanceListId], references: [id])
+
+  apartment       Apartment @relation(fields: [apartmentId], references: [id])
 
   items    InvoiceItem[]
   payments Payment[]
 
   @@unique([apartmentId, month, year])
+  @@index([maintenanceListId])
 }
 
 model InvoiceItem {

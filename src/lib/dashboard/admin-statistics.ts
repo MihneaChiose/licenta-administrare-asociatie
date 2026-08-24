@@ -1,4 +1,10 @@
 import { prisma } from "@/lib/prisma";
+import { MaintenanceListStatus } from "@/generated/prisma/client";
+
+const visibleMaintenanceStatuses = [
+  MaintenanceListStatus.PUBLISHED,
+  MaintenanceListStatus.CLOSED,
+];
 
 export async function getAdminDashboardStatistics(adminId: string) {
   const association = await prisma.association.findFirst({
@@ -55,16 +61,30 @@ export async function getAdminDashboardStatistics(adminId: string) {
       apartmentId: {
         in: apartmentIds,
       },
+
       status: "UNPAID",
+
+      maintenanceList: {
+        status: {
+          in: visibleMaintenanceStatuses,
+        },
+      },
     },
   });
 
   const pendingPayments = await prisma.payment.count({
     where: {
       status: "PENDING",
+
       invoice: {
         apartmentId: {
           in: apartmentIds,
+        },
+
+        maintenanceList: {
+          status: {
+            in: visibleMaintenanceStatuses,
+          },
         },
       },
     },
