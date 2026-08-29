@@ -7,13 +7,17 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
 const createTicketSchema = z.object({
+  apartmentId: z.string().min(1, "Apartamentul este obligatoriu"),
+
   title: z
     .string()
+    .trim()
     .min(3, "Titlul trebuie sa aiba cel putin 3 caractere")
     .max(100, "Titlul este prea lung"),
 
   description: z
     .string()
+    .trim()
     .min(10, "Descrierea trebuie sa aiba cel putin 10 caractere")
     .max(1000, "Descrierea este prea lunga"),
 });
@@ -30,25 +34,31 @@ export async function createTicketAction(formData: FormData) {
   }
 
   const parsed = createTicketSchema.safeParse({
+    apartmentId: formData.get("apartmentId"),
     title: formData.get("title"),
     description: formData.get("description"),
   });
 
   if (!parsed.success) {
     const message = parsed.error.issues[0]?.message ?? "Date invalide";
+
     redirect(`/locatar/sesizari?error=${encodeURIComponent(message)}`);
   }
 
   const apartment = await prisma.apartment.findFirst({
     where: {
+      id: parsed.data.apartmentId,
       ownerId: session.id,
+    },
+    select: {
+      id: true,
     },
   });
 
   if (!apartment) {
     redirect(
       `/locatar/sesizari?error=${encodeURIComponent(
-        "Nu exista niciun apartament asociat acestui cont.",
+        "Apartamentul selectat nu exista sau nu apartine contului tau.",
       )}`,
     );
   }
