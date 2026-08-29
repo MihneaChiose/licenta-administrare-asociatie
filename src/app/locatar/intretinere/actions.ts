@@ -283,7 +283,7 @@ export async function startStripeCheckoutAction(formData: FormData) {
   const appUrl = getAppUrl();
 
   const successMessage = encodeURIComponent(
-    "Plata a fost trimisa catre Stripe si este in curs de confirmare automata.",
+    "Plata a fost procesata de Stripe. Statusul facturii se actualizeaza automat.",
   );
 
   const cancelMessage = encodeURIComponent(
