@@ -12,6 +12,9 @@ type AdminPaymentsPageProps = {
   }>;
 };
 
+const PAYMENT_METHOD_MANUAL = "MANUAL";
+const PAYMENT_METHOD_STRIPE = "STRIPE";
+
 const monthNames: Record<number, string> = {
   1: "Ianuarie",
   2: "Februarie",
@@ -27,11 +30,21 @@ const monthNames: Record<number, string> = {
   12: "Decembrie",
 };
 
-const paymentStatusLabels: Record<PaymentStatus, string> = {
-  PENDING: "In asteptare",
-  PAID: "Confirmata",
-  REJECTED: "Respinsa",
-};
+function getPaymentStatusLabel(status: PaymentStatus, method: string) {
+  if (status === PaymentStatus.PAID) {
+    return "Confirmata";
+  }
+
+  if (status === PaymentStatus.REJECTED) {
+    return method === PAYMENT_METHOD_STRIPE
+      ? "Expirata / nereusita"
+      : "Respinsa";
+  }
+
+  return method === PAYMENT_METHOD_STRIPE
+    ? "In procesare Stripe"
+    : "In asteptare";
+}
 
 function getPaymentStatusClass(status: PaymentStatus) {
   if (status === PaymentStatus.PAID) {
@@ -43,6 +56,18 @@ function getPaymentStatusClass(status: PaymentStatus) {
   }
 
   return "bg-yellow-50 text-yellow-700";
+}
+
+function getPaymentMethodLabel(method: string) {
+  if (method === PAYMENT_METHOD_STRIPE) {
+    return "Plata online - Stripe";
+  }
+
+  if (method === PAYMENT_METHOD_MANUAL) {
+    return "Plata manuala";
+  }
+
+  return method;
 }
 
 export default async function AdminPaymentsPage({
@@ -98,7 +123,7 @@ export default async function AdminPaymentsPage({
   return (
     <AdminLayout
       title="Plati locatari"
-      description="Confirma platile transmise de locatarii din asociatia administrata."
+      description="Urmareste platile manuale si online aferente intretinerii locatarilor."
     >
       <div className="mx-auto max-w-7xl">
         {params.error && (
@@ -116,13 +141,17 @@ export default async function AdminPaymentsPage({
         <div className="mt-8 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-sm font-medium text-gray-500">Plati totale</h2>
+
             <p className="mt-2 text-3xl font-bold text-gray-900">
               {payments.length}
             </p>
           </div>
 
           <div className="rounded-2xl bg-white p-6 shadow">
-            <h2 className="text-sm font-medium text-gray-500">In asteptare</h2>
+            <h2 className="text-sm font-medium text-gray-500">
+              In asteptare / procesare
+            </h2>
+
             <p className="mt-2 text-3xl font-bold text-gray-900">
               {pendingPayments.length}
             </p>
@@ -130,6 +159,7 @@ export default async function AdminPaymentsPage({
 
           <div className="rounded-2xl bg-white p-6 shadow">
             <h2 className="text-sm font-medium text-gray-500">Confirmate</h2>
+
             <p className="mt-2 text-3xl font-bold text-gray-900">
               {confirmedPayments.length}
             </p>
@@ -139,6 +169,7 @@ export default async function AdminPaymentsPage({
         <section className="mt-8 rounded-2xl bg-white shadow">
           <div className="border-b border-gray-200 p-6">
             <h2 className="text-lg font-semibold text-gray-900">Lista plati</h2>
+
             <p className="mt-1 text-sm text-gray-600">
               Total inregistrari: {payments.length}
             </p>
@@ -168,7 +199,10 @@ export default async function AdminPaymentsPage({
                             payment.status,
                           )}`}
                         >
-                          {paymentStatusLabels[payment.status]}
+                          {getPaymentStatusLabel(
+                            payment.status,
+                            payment.method,
+                          )}
                         </span>
                       </div>
 
@@ -182,11 +216,11 @@ export default async function AdminPaymentsPage({
                       </p>
 
                       <p className="mt-1 text-sm text-gray-600">
-                        Metoda: {payment.method}
+                        Metoda: {getPaymentMethodLabel(payment.method)}
                       </p>
 
                       <p className="mt-1 text-sm text-gray-500">
-                        Cerere trimisa la{" "}
+                        Inregistrata la{" "}
                         {payment.createdAt.toLocaleDateString("ro-RO")}
                       </p>
 
@@ -196,6 +230,14 @@ export default async function AdminPaymentsPage({
                           {payment.paidAt.toLocaleDateString("ro-RO")}
                         </p>
                       )}
+
+                      {payment.method === PAYMENT_METHOD_STRIPE &&
+                        payment.status === PaymentStatus.PENDING && (
+                          <p className="mt-2 text-sm text-yellow-700">
+                            Plata este procesata automat prin Stripe. Nu
+                            necesita confirmare manuala.
+                          </p>
+                        )}
                     </div>
 
                     <div className="text-left lg:text-right">
@@ -203,22 +245,23 @@ export default async function AdminPaymentsPage({
                         {payment.amount.toString()} RON
                       </p>
 
-                      {payment.status === PaymentStatus.PENDING && (
-                        <form action={confirmPaymentAction} className="mt-4">
-                          <input
-                            type="hidden"
-                            name="paymentId"
-                            value={payment.id}
-                          />
+                      {payment.status === PaymentStatus.PENDING &&
+                        payment.method === PAYMENT_METHOD_MANUAL && (
+                          <form action={confirmPaymentAction} className="mt-4">
+                            <input
+                              type="hidden"
+                              name="paymentId"
+                              value={payment.id}
+                            />
 
-                          <button
-                            type="submit"
-                            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-                          >
-                            Confirma plata
-                          </button>
-                        </form>
-                      )}
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                            >
+                              Confirma plata
+                            </button>
+                          </form>
+                        )}
                     </div>
                   </div>
                 </article>

@@ -71,14 +71,14 @@ enum MaintenanceListStatus {
 }
 
 model User {
-  id           String      @id @default(cuid())
+  id           String   @id @default(cuid())
   name         String
-  email        String      @unique
+  email        String   @unique
   passwordHash String
   role         UserRole
-  createdAt    DateTime    @default(now())
+  createdAt    DateTime @default(now())
 
-  apartments   Apartment[]
+  apartments Apartment[]
 
   managedAssociations Association[] @relation("AssociationAdmin")
 }
@@ -92,10 +92,10 @@ model Association {
 
   admin User @relation("AssociationAdmin", fields: [adminId], references: [id])
 
-  apartments        Apartment[]
-  expenses          Expense[]
-  announcements     Announcement[]
-  maintenanceLists  MaintenanceList[]
+  apartments       Apartment[]
+  expenses         Expense[]
+  announcements    Announcement[]
+  maintenanceLists MaintenanceList[]
 }
 
 model Apartment {
@@ -147,11 +147,11 @@ model Consumption {
   apartmentId String
   month       Int
   year        Int
-  coldWater   Float   @default(0)
-  hotWater    Float   @default(0)
-  gas         Float   @default(0)
-  electricity Float   @default(0)
-  heating     Float   @default(0)
+  coldWater   Float    @default(0)
+  hotWater    Float    @default(0)
+  gas         Float    @default(0)
+  electricity Float    @default(0)
+  heating     Float    @default(0)
   submittedAt DateTime @default(now())
 
   apartment Apartment @relation(fields: [apartmentId], references: [id])
@@ -205,7 +205,7 @@ model Invoice {
 
   maintenanceList MaintenanceList @relation(fields: [maintenanceListId], references: [id])
 
-  apartment       Apartment @relation(fields: [apartmentId], references: [id])
+  apartment Apartment @relation(fields: [apartmentId], references: [id])
 
   items    InvoiceItem[]
   payments Payment[]
@@ -222,26 +222,29 @@ model InvoiceItem {
   sourceType  String
   sourceId    String?
 
-  expenseCategory     ExpenseCategory?
-  distributionMethod  ExpenseDistributionMethod?
-  sourceAmount        Decimal? @db.Decimal(10, 2)
-  basisValue          Decimal? @db.Decimal(14, 3)
-  basisTotal          Decimal? @db.Decimal(14, 3)
-  sharePercentage     Decimal? @db.Decimal(9, 6)
-  basisUnit           String?
+  expenseCategory    ExpenseCategory?
+  distributionMethod ExpenseDistributionMethod?
+  sourceAmount       Decimal?                   @db.Decimal(10, 2)
+  basisValue         Decimal?                   @db.Decimal(14, 3)
+  basisTotal         Decimal?                   @db.Decimal(14, 3)
+  sharePercentage    Decimal?                   @db.Decimal(9, 6)
+  basisUnit          String?
 
   invoice Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
 }
 
 model Payment {
-  id              String   @id @default(cuid())
-  invoiceId       String
-  amount          Decimal  @db.Decimal(10, 2)
-  method          String
-  status          PaymentStatus @default(PENDING)
-  stripeSessionId String?
-  paidAt          DateTime?
-  createdAt       DateTime @default(now())
+  id        String        @id @default(cuid())
+  invoiceId String
+  amount    Decimal       @db.Decimal(10, 2)
+  method    String
+  status    PaymentStatus @default(PENDING)
+
+  providerSessionId String? @unique @map("stripeSessionId")
+  providerPaymentId String? @unique
+
+  paidAt    DateTime?
+  createdAt DateTime  @default(now())
 
   invoice Invoice @relation(fields: [invoiceId], references: [id])
 }

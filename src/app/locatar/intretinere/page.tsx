@@ -2,11 +2,12 @@ import { redirect } from "next/navigation";
 import {
   InvoiceStatus,
   MaintenanceListStatus,
+  PaymentStatus,
   UserRole,
 } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { requestPaymentAction } from "./actions";
+import { requestPaymentAction, startStripeCheckoutAction } from "./actions";
 import { TenantLayout } from "@/components/layout/TenantLayout";
 import { InvoiceCalculationDetails } from "@/components/maintenance/InvoiceCalculationDetails";
 
@@ -24,6 +25,18 @@ const monthNames: Record<number, string> = {
   11: "Noiembrie",
   12: "Decembrie",
 };
+
+function hasPendingStripePayment(
+  payments: Array<{
+    status: PaymentStatus;
+    method: string;
+  }>,
+) {
+  return payments.some(
+    (payment) =>
+      payment.status === PaymentStatus.PENDING && payment.method === "STRIPE",
+  );
+}
 
 const invoiceStatusLabels: Record<InvoiceStatus, string> = {
   UNPAID: "Neplatita",
@@ -240,20 +253,41 @@ export default async function TenantInvoicesPage({
                       </span>
 
                       {invoice.status === InvoiceStatus.UNPAID && (
-                        <form action={requestPaymentAction} className="mt-4">
-                          <input
-                            type="hidden"
-                            name="invoiceId"
-                            value={invoice.id}
-                          />
+                        <div className="mt-4 flex flex-wrap gap-3">
+                          <form action={startStripeCheckoutAction}>
+                            <input
+                              type="hidden"
+                              name="invoiceId"
+                              value={invoice.id}
+                            />
 
-                          <button
-                            type="submit"
-                            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
-                          >
-                            Trimite cerere de plata
-                          </button>
-                        </form>
+                            <button
+                              type="submit"
+                              className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                            >
+                              {hasPendingStripePayment(invoice.payments)
+                                ? "Continua plata online"
+                                : "Plateste online cu Stripe"}
+                            </button>
+                          </form>
+
+                          {!hasPendingStripePayment(invoice.payments) && (
+                            <form action={requestPaymentAction}>
+                              <input
+                                type="hidden"
+                                name="invoiceId"
+                                value={invoice.id}
+                              />
+
+                              <button
+                                type="submit"
+                                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-900 hover:bg-gray-50"
+                              >
+                                Trimite cerere de plata manuala
+                              </button>
+                            </form>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>

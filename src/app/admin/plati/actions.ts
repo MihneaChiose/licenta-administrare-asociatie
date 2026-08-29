@@ -10,6 +10,8 @@ import {
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
+const PAYMENT_METHOD_MANUAL = "MANUAL";
+
 const confirmPaymentSchema = z.object({
   paymentId: z.string().min(1, "Plata invalida"),
 });
@@ -37,6 +39,7 @@ export async function confirmPaymentAction(formData: FormData) {
   const payment = await prisma.payment.findFirst({
     where: {
       id: parsed.data.paymentId,
+
       invoice: {
         apartment: {
           association: {
@@ -45,6 +48,7 @@ export async function confirmPaymentAction(formData: FormData) {
         },
       },
     },
+
     include: {
       invoice: true,
     },
@@ -58,11 +62,23 @@ export async function confirmPaymentAction(formData: FormData) {
     );
   }
 
-  if (payment.status === PaymentStatus.PAID) {
+  if (payment.method !== PAYMENT_METHOD_MANUAL) {
     redirect(
-      `/admin/plati?error=${encodeURIComponent("Plata este deja confirmata.")}`,
+      `/admin/plati?error=${encodeURIComponent(
+        "Platile Stripe sunt confirmate automat si nu pot fi aprobate manual.",
+      )}`,
     );
   }
+
+  if (payment.status !== PaymentStatus.PENDING) {
+    redirect(
+      `/admin/plati?error=${encodeURIComponent(
+        "Doar platile aflate in asteptare pot fi confirmate.",
+      )}`,
+    );
+  }
+
+  const paidAt = new Date();
 
   await prisma.$transaction(async (tx) => {
     await tx.payment.update({
@@ -71,7 +87,7 @@ export async function confirmPaymentAction(formData: FormData) {
       },
       data: {
         status: PaymentStatus.PAID,
-        paidAt: new Date(),
+        paidAt,
       },
     });
 
@@ -81,7 +97,7 @@ export async function confirmPaymentAction(formData: FormData) {
       },
       data: {
         status: InvoiceStatus.PAID,
-        paidAt: new Date(),
+        paidAt,
       },
     });
   });
