@@ -2,8 +2,10 @@ import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createAnnouncementAction } from "./actions";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { CreateAnnouncementForm } from "./CreateAnnouncementForm";
+import { WithdrawAnnouncementButton } from "./WithdrawAnnouncementButton";
+import { EditAnnouncementForm } from "./EditAnnouncementForm";
 
 type AdminAnnouncementsPageProps = {
   searchParams: Promise<{
@@ -27,6 +29,19 @@ export default async function AdminAnnouncementsPage({
 
   const params = await searchParams;
 
+  const associations = await prisma.association.findMany({
+    where: {
+      adminId: session.id,
+    },
+    select: {
+      id: true,
+      name: true,
+    },
+    orderBy: {
+      name: "asc",
+    },
+  });
+
   const announcements = await prisma.announcement.findMany({
     where: {
       association: {
@@ -41,12 +56,58 @@ export default async function AdminAnnouncementsPage({
     },
   });
 
+  const activeAnnouncements = announcements.filter(
+    (announcement) => announcement.withdrawnAt === null,
+  );
+
+  const withdrawnAnnouncements = announcements.filter(
+    (announcement) => announcement.withdrawnAt !== null,
+  );
+
   return (
     <AdminLayout
       title="Avizier virtual"
-      description="Publica anunturi vizibile pentru locatarii din asociatia administrata."
+      description="Publica si administreaza anunturile vizibile pentru locatarii din asociatiile administrate."
     >
       <div className="mx-auto max-w-6xl">
+        {params.error && (
+          <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
+            {params.error}
+          </div>
+        )}
+
+        {params.success && (
+          <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-700">
+            {params.success}
+          </div>
+        )}
+
+        <div className="mt-6 grid gap-4 sm:grid-cols-3">
+          <div className="rounded-2xl bg-white p-5 shadow">
+            <p className="text-sm font-medium text-gray-500">Total anunturi</p>
+
+            <p className="mt-2 text-3xl font-bold text-gray-900">
+              {announcements.length}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow">
+            <p className="text-sm font-medium text-gray-500">Active</p>
+
+            <p className="mt-2 text-3xl font-bold text-gray-900">
+              {activeAnnouncements.length}
+            </p>
+          </div>
+
+          <div className="rounded-2xl bg-white p-5 shadow">
+            <p className="text-sm font-medium text-gray-500">Retrase</p>
+
+            <p className="mt-2 text-3xl font-bold text-gray-900">
+              {withdrawnAnnouncements.length}
+            </p>
+          </div>
+        </div>
+
         <div className="mt-6 grid gap-6 lg:grid-cols-[0.9fr_1.3fr]">
           <section className="rounded-2xl bg-white p-8 shadow">
             <h2 className="text-lg font-semibold text-gray-900">
@@ -54,55 +115,16 @@ export default async function AdminAnnouncementsPage({
             </h2>
 
             <p className="mt-1 text-sm text-gray-600">
-              Completeaza titlul si continutul anuntului.
+              Selecteaza asociatia si completeaza continutul anuntului.
             </p>
 
-            {params.error && (
-              <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-                {params.error}
+            {associations.length === 0 ? (
+              <div className="mt-8 rounded-lg bg-yellow-50 p-4 text-sm text-yellow-700">
+                Nu exista nicio asociatie administrata de acest cont.
               </div>
+            ) : (
+              <CreateAnnouncementForm associations={associations} />
             )}
-
-            {params.success && (
-              <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-700">
-                {params.success}
-              </div>
-            )}
-
-            <form action={createAnnouncementAction} className="mt-8 space-y-5">
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Titlu
-                </label>
-                <input
-                  name="title"
-                  type="text"
-                  required
-                  placeholder="Ex: Oprire apa calda"
-                  className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Continut
-                </label>
-                <textarea
-                  name="content"
-                  required
-                  rows={8}
-                  placeholder="Scrie anuntul pentru locatari..."
-                  className="mt-1 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="w-full rounded-lg bg-black px-4 py-2 font-medium text-white hover:bg-gray-800"
-              >
-                Publica anuntul
-              </button>
-            </form>
           </section>
 
           <section className="rounded-2xl bg-white shadow">
@@ -110,6 +132,7 @@ export default async function AdminAnnouncementsPage({
               <h2 className="text-lg font-semibold text-gray-900">
                 Anunturi publicate
               </h2>
+
               <p className="mt-1 text-sm text-gray-600">
                 Total anunturi: {announcements.length}
               </p>
@@ -121,25 +144,75 @@ export default async function AdminAnnouncementsPage({
               </div>
             ) : (
               <div className="space-y-4 p-6">
-                {announcements.map((announcement) => (
-                  <article
-                    key={announcement.id}
-                    className="rounded-2xl border border-gray-200 p-5"
-                  >
-                    <h3 className="text-lg font-semibold text-gray-900">
-                      {announcement.title}
-                    </h3>
+                {announcements.map((announcement) => {
+                  const isWithdrawn = announcement.withdrawnAt !== null;
 
-                    <p className="mt-1 text-sm text-gray-500">
-                      Publicat la{" "}
-                      {announcement.createdAt.toLocaleDateString("ro-RO")}
-                    </p>
+                  return (
+                    <article
+                      key={announcement.id}
+                      className={`rounded-2xl border p-5 ${
+                        isWithdrawn
+                          ? "border-gray-200 bg-gray-50"
+                          : "border-gray-200 bg-white"
+                      }`}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-3">
+                            <h3 className="text-lg font-semibold text-gray-900">
+                              {announcement.title}
+                            </h3>
 
-                    <p className="mt-4 whitespace-pre-line text-sm text-gray-700">
-                      {announcement.content}
-                    </p>
-                  </article>
-                ))}
+                            <span
+                              className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${
+                                isWithdrawn
+                                  ? "bg-gray-200 text-gray-700"
+                                  : "bg-green-50 text-green-700"
+                              }`}
+                            >
+                              {isWithdrawn ? "Retras" : "Activ"}
+                            </span>
+                          </div>
+
+                          <p className="mt-1 text-sm font-medium text-gray-600">
+                            {announcement.association.name}
+                          </p>
+                        </div>
+
+                        <span className="text-sm text-gray-500">
+                          {announcement.createdAt.toLocaleDateString("ro-RO")}
+                        </span>
+                      </div>
+
+                      <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">
+                        {announcement.content}
+                      </p>
+
+                      {announcement.withdrawnAt && (
+                        <p className="mt-4 text-xs text-gray-500">
+                          Retras la{" "}
+                          {announcement.withdrawnAt.toLocaleDateString("ro-RO")}
+                        </p>
+                      )}
+
+                      {!isWithdrawn && (
+                        <div>
+                          <div className="flex flex-wrap gap-2">
+                            <EditAnnouncementForm
+                              announcementId={announcement.id}
+                              initialTitle={announcement.title}
+                              initialContent={announcement.content}
+                            />
+
+                            <WithdrawAnnouncementButton
+                              announcementId={announcement.id}
+                            />
+                          </div>
+                        </div>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             )}
           </section>
