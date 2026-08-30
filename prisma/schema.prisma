@@ -262,11 +262,12 @@ model Ticket {
 }
 
 model Announcement {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   associationId String
   title         String
   content       String
-  createdAt     DateTime @default(now())
+  createdAt     DateTime  @default(now())
+  withdrawnAt   DateTime?
 
   association Association @relation(fields: [associationId], references: [id])
 }

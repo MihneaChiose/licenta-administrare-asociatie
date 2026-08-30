@@ -50,34 +50,52 @@ export default async function TenantTicketsPage({
 
   const params = await searchParams;
 
-  const apartment = await prisma.apartment.findFirst({
+  const apartments = await prisma.apartment.findMany({
     where: {
       ownerId: session.id,
     },
     include: {
       association: true,
     },
+    orderBy: {
+      number: "asc",
+    },
   });
 
-  if (!apartment) {
+  if (apartments.length === 0) {
     return (
-      <main className="min-h-screen bg-gray-100 p-8">
-        <div className="mx-auto max-w-4xl">
+      <TenantLayout
+        title="Sesizarile mele"
+        description="Trimite si urmareste sesizarile catre administrator."
+      >
+        <div className="mx-auto max-w-6xl">
           <div className="mt-6 rounded-2xl bg-white p-8 shadow">
-            <h1 className="text-2xl font-bold text-gray-900">Sesizari</h1>
-            <p className="mt-4 text-gray-600">
+            <p className="text-gray-600">
               Nu exista niciun apartament asociat contului tau.
             </p>
           </div>
         </div>
-      </main>
+      </TenantLayout>
     );
   }
 
+  const apartmentIds = apartments.map((apartment) => apartment.id);
+
   const tickets = await prisma.ticket.findMany({
     where: {
-      apartmentId: apartment.id,
+      apartmentId: {
+        in: apartmentIds,
+      },
     },
+
+    include: {
+      apartment: {
+        include: {
+          association: true,
+        },
+      },
+    },
+
     orderBy: {
       createdAt: "desc",
     },
@@ -96,7 +114,7 @@ export default async function TenantTicketsPage({
             </h1>
 
             <p className="mt-2 text-gray-600">
-              Apartament {apartment.number}, {apartment.association.name}
+              Selecteaza apartamentul pentru care doresti sa trimiti sesizarea.
             </p>
 
             {params.error && (
@@ -113,25 +131,82 @@ export default async function TenantTicketsPage({
 
             <form action={createTicketAction} className="mt-8 space-y-5">
               <div>
-                <label className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="apartmentId"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Apartament
+                </label>
+
+                {apartments.length === 1 ? (
+                  <>
+                    <input
+                      type="hidden"
+                      name="apartmentId"
+                      value={apartments[0].id}
+                    />
+
+                    <div className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
+                      Apartament {apartments[0].number} -{" "}
+                      {apartments[0].association.name}
+                    </div>
+                  </>
+                ) : (
+                  <select
+                    id="apartmentId"
+                    name="apartmentId"
+                    required
+                    defaultValue=""
+                    className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
+                  >
+                    <option value="" disabled>
+                      Selecteaza apartamentul
+                    </option>
+
+                    {apartments.map((apartment) => (
+                      <option key={apartment.id} value={apartment.id}>
+                        Apartament {apartment.number} -{" "}
+                        {apartment.association.name}
+                      </option>
+                    ))}
+                  </select>
+                )}
+              </div>
+
+              <div>
+                <label
+                  htmlFor="title"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Titlu
                 </label>
+
                 <input
+                  id="title"
                   name="title"
                   type="text"
                   required
+                  minLength={3}
+                  maxLength={100}
                   placeholder="Ex: Bec ars pe scara"
                   className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="description"
+                  className="text-sm font-medium text-gray-700"
+                >
                   Descriere
                 </label>
+
                 <textarea
+                  id="description"
                   name="description"
                   required
+                  minLength={10}
+                  maxLength={1000}
                   rows={6}
                   placeholder="Descrie problema observata..."
                   className="mt-1 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black"
@@ -148,6 +223,16 @@ export default async function TenantTicketsPage({
           </section>
 
           <section className="rounded-2xl bg-white shadow">
+            <div className="border-b border-gray-200 p-6">
+              <h2 className="text-lg font-semibold text-gray-900">
+                Istoric sesizari
+              </h2>
+
+              <p className="mt-1 text-sm text-gray-600">
+                Total sesizari: {tickets.length}
+              </p>
+            </div>
+
             {tickets.length === 0 ? (
               <div className="p-6 text-sm text-gray-600">
                 Nu ai trimis inca nicio sesizare.
@@ -164,7 +249,13 @@ export default async function TenantTicketsPage({
                         <h3 className="font-semibold text-gray-900">
                           {ticket.title}
                         </h3>
+
                         <p className="mt-1 text-sm text-gray-600">
+                          Apartament {ticket.apartment.number} -{" "}
+                          {ticket.apartment.association.name}
+                        </p>
+
+                        <p className="mt-1 text-sm text-gray-500">
                           Trimisa la{" "}
                           {ticket.createdAt.toLocaleDateString("ro-RO")}
                         </p>
@@ -179,9 +270,17 @@ export default async function TenantTicketsPage({
                       </span>
                     </div>
 
-                    <p className="mt-4 text-sm text-gray-700">
+                    <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">
                       {ticket.description}
                     </p>
+
+                    {ticket.updatedAt.getTime() !==
+                      ticket.createdAt.getTime() && (
+                      <p className="mt-4 text-xs text-gray-500">
+                        Ultima actualizare:{" "}
+                        {ticket.updatedAt.toLocaleDateString("ro-RO")}
+                      </p>
+                    )}
                   </article>
                 ))}
               </div>

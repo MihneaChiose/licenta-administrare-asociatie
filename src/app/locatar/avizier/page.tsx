@@ -15,16 +15,19 @@ export default async function TenantAnnouncementsPage() {
     redirect("/admin/dashboard");
   }
 
-  const apartment = await prisma.apartment.findFirst({
+  const apartments = await prisma.apartment.findMany({
     where: {
       ownerId: session.id,
     },
     include: {
       association: true,
     },
+    orderBy: {
+      number: "asc",
+    },
   });
 
-  if (!apartment) {
+  if (apartments.length === 0) {
     return (
       <TenantLayout
         title="Informatii indisponibile"
@@ -40,10 +43,23 @@ export default async function TenantAnnouncementsPage() {
     );
   }
 
+  const associationIds = [
+    ...new Set(apartments.map((apartment) => apartment.associationId)),
+  ];
+
   const announcements = await prisma.announcement.findMany({
     where: {
-      associationId: apartment.associationId,
+      associationId: {
+        in: associationIds,
+      },
+
+      withdrawnAt: null,
     },
+
+    include: {
+      association: true,
+    },
+
     orderBy: {
       createdAt: "desc",
     },
@@ -52,7 +68,7 @@ export default async function TenantAnnouncementsPage() {
   return (
     <TenantLayout
       title="Avizier virtual"
-      description={`Anunturi pentru Apartamentul ${apartment.number}, ${apartment.association.name}`}
+      description="Anunturile asociatiilor din care fac parte apartamentele tale."
     >
       <div className="mx-auto max-w-5xl">
         <section className="mt-8 rounded-2xl bg-white shadow">
@@ -60,6 +76,7 @@ export default async function TenantAnnouncementsPage() {
             <h2 className="text-lg font-semibold text-gray-900">
               Anunturi recente
             </h2>
+
             <p className="mt-1 text-sm text-gray-600">
               Total anunturi: {announcements.length}
             </p>
@@ -77,16 +94,22 @@ export default async function TenantAnnouncementsPage() {
                   className="rounded-2xl border border-gray-200 p-6"
                 >
                   <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
-                    <h3 className="text-xl font-semibold text-gray-900">
-                      {announcement.title}
-                    </h3>
+                    <div>
+                      <h3 className="text-xl font-semibold text-gray-900">
+                        {announcement.title}
+                      </h3>
+
+                      <p className="mt-1 text-sm font-medium text-gray-600">
+                        {announcement.association.name}
+                      </p>
+                    </div>
 
                     <span className="text-sm text-gray-500">
                       {announcement.createdAt.toLocaleDateString("ro-RO")}
                     </span>
                   </div>
 
-                  <p className="mt-4 whitespace-pre-line text-sm leading-6 text-gray-700">
+                  <p className="mt-4 whitespace-pre-wrap text-sm leading-6 text-gray-700">
                     {announcement.content}
                   </p>
                 </article>
