@@ -1,10 +1,24 @@
+import {
+  ArrowRight,
+  Building2,
+  CalendarDays,
+  CheckCircle2,
+  CircleDot,
+  Clock3,
+  Inbox,
+  LifeBuoy,
+  Mail,
+  MessageSquareText,
+  UserRound,
+  XCircle,
+} from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { TicketStatus, UserRole } from "@/generated/prisma/client";
+import { AdminLayout } from "@/components/layout/AdminLayout";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { updateTicketStatusAction } from "./actions";
-import { AdminLayout } from "@/components/layout/AdminLayout";
 
 type AdminTicketsPageProps = {
   searchParams: Promise<{
@@ -17,10 +31,10 @@ type AdminTicketsPageProps = {
 type TicketFilter = TicketStatus | "ALL";
 
 const ticketStatusLabels: Record<TicketStatus, string> = {
-  OPEN: "Deschisa",
-  IN_PROGRESS: "In lucru",
-  RESOLVED: "Rezolvata",
-  CLOSED: "Inchisa",
+  OPEN: "Deschisă",
+  IN_PROGRESS: "În lucru",
+  RESOLVED: "Rezolvată",
+  CLOSED: "Închisă",
 };
 
 const nextTicketStatus: Partial<Record<TicketStatus, TicketStatus>> = {
@@ -30,9 +44,9 @@ const nextTicketStatus: Partial<Record<TicketStatus, TicketStatus>> = {
 };
 
 const nextStatusButtonLabels: Partial<Record<TicketStatus, string>> = {
-  [TicketStatus.OPEN]: "Preia in lucru",
-  [TicketStatus.IN_PROGRESS]: "Marcheaza rezolvata",
-  [TicketStatus.RESOLVED]: "Inchide sesizarea",
+  [TicketStatus.OPEN]: "Preia în lucru",
+  [TicketStatus.IN_PROGRESS]: "Marchează rezolvată",
+  [TicketStatus.RESOLVED]: "Închide sesizarea",
 };
 
 const filterOptions: Array<{
@@ -49,7 +63,7 @@ const filterOptions: Array<{
   },
   {
     value: TicketStatus.IN_PROGRESS,
-    label: "In lucru",
+    label: "În lucru",
   },
   {
     value: TicketStatus.RESOLVED,
@@ -57,24 +71,40 @@ const filterOptions: Array<{
   },
   {
     value: TicketStatus.CLOSED,
-    label: "Inchise",
+    label: "Închise",
   },
 ];
 
 function getStatusClass(status: TicketStatus) {
   if (status === TicketStatus.RESOLVED) {
-    return "bg-green-50 text-green-700";
+    return "border-emerald-400/15 bg-emerald-400/[0.07] text-emerald-300";
   }
 
   if (status === TicketStatus.IN_PROGRESS) {
-    return "bg-yellow-50 text-yellow-700";
+    return "border-amber-400/15 bg-amber-400/[0.07] text-amber-300";
   }
 
   if (status === TicketStatus.CLOSED) {
-    return "bg-gray-100 text-gray-700";
+    return "border-slate-400/10 bg-slate-400/[0.06] text-slate-400";
   }
 
-  return "bg-blue-50 text-blue-700";
+  return "border-blue-400/15 bg-blue-400/[0.07] text-blue-300";
+}
+
+function getStatusIcon(status: TicketStatus) {
+  if (status === TicketStatus.RESOLVED) {
+    return CheckCircle2;
+  }
+
+  if (status === TicketStatus.IN_PROGRESS) {
+    return Clock3;
+  }
+
+  if (status === TicketStatus.CLOSED) {
+    return XCircle;
+  }
+
+  return CircleDot;
 }
 
 function getSelectedFilter(value: string | undefined): TicketFilter {
@@ -158,167 +188,392 @@ export default async function AdminTicketsPage({
     ).length,
   };
 
+  const activeTickets =
+    statusCounts[TicketStatus.OPEN] + statusCounts[TicketStatus.IN_PROGRESS];
+
   return (
     <AdminLayout
-      title="Sesizari locatari"
-      description="Gestioneaza si urmareste sesizarile trimise de locatarii din asociatia administrata."
+      title="Sesizări locatari"
+      description="Gestionează și urmărește sesizările trimise de locatarii din asociația administrată."
     >
-      <div className="mx-auto max-w-7xl">
+      <div className="mx-auto max-w-7xl space-y-8">
         {params.error && (
-          <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-            {params.error}
+          <div className="flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.08] p-4 text-sm text-rose-300">
+            <XCircle size={18} className="mt-0.5 shrink-0" />
+
+            <p>{params.error}</p>
           </div>
         )}
 
         {params.success && (
-          <div className="mt-6 rounded-lg bg-green-50 p-4 text-sm text-green-700">
-            {params.success}
+          <div className="flex items-start gap-3 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.08] p-4 text-sm text-emerald-300">
+            <CheckCircle2 size={18} className="mt-0.5 shrink-0" />
+
+            <p>{params.success}</p>
           </div>
         )}
 
-        <div className="mt-8 grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-          {filterOptions.map((option) => (
+        <section>
+          <div className="mb-5">
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.7)]" />
+
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-400">
+                Support operations
+              </p>
+            </div>
+
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
+              Centru de sesizări
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Monitorizează solicitările locatarilor și evoluția lor prin fluxul
+              de soluționare.
+            </p>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
             <Link
-              key={option.value}
-              href={getFilterUrl(option.value)}
-              className={`rounded-2xl p-5 shadow transition ${
-                selectedFilter === option.value
-                  ? "bg-black text-white"
-                  : "bg-white text-gray-900 hover:bg-gray-50"
+              href={getFilterUrl("ALL")}
+              className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
+                selectedFilter === "ALL"
+                  ? "border-violet-400/20 bg-violet-500/[0.08] shadow-[0_18px_45px_rgba(118,103,247,0.08)]"
+                  : "border-white/[0.07] bg-[#10182a]/70 hover:border-violet-400/15"
               }`}
             >
-              <p
-                className={`text-sm font-medium ${
-                  selectedFilter === option.value
-                    ? "text-gray-300"
-                    : "text-gray-500"
-                }`}
-              >
-                {option.label}
-              </p>
+              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
-              <p className="mt-2 text-3xl font-bold">
-                {statusCounts[option.value]}
-              </p>
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-400">Toate</p>
+
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {statusCounts.ALL}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">Total sesizări</p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/10">
+                  <Inbox size={18} />
+                </div>
+              </div>
             </Link>
-          ))}
-        </div>
 
-        <section className="mt-8 rounded-2xl bg-white shadow">
-          <div className="border-b border-gray-200 p-6">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <h2 className="text-lg font-semibold text-gray-900">
-                  Lista sesizari
-                </h2>
+            <Link
+              href={getFilterUrl(TicketStatus.OPEN)}
+              className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
+                selectedFilter === TicketStatus.OPEN
+                  ? "border-blue-400/20 bg-blue-400/[0.07]"
+                  : "border-white/[0.07] bg-[#10182a]/70 hover:border-blue-400/15"
+              }`}
+            >
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-400">Deschise</p>
 
-                <p className="mt-1 text-sm text-gray-600">
-                  Afisate: {tickets.length} din {allTickets.length}
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {statusCounts[TicketStatus.OPEN]}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Necesită preluare
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-blue-400/10 text-blue-300 ring-1 ring-blue-400/10">
+                  <CircleDot size={18} />
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href={getFilterUrl(TicketStatus.IN_PROGRESS)}
+              className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
+                selectedFilter === TicketStatus.IN_PROGRESS
+                  ? "border-amber-400/20 bg-amber-400/[0.07]"
+                  : "border-white/[0.07] bg-[#10182a]/70 hover:border-amber-400/15"
+              }`}
+            >
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-400">În lucru</p>
+
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {statusCounts[TicketStatus.IN_PROGRESS]}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    În curs de rezolvare
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/10">
+                  <Clock3 size={18} />
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href={getFilterUrl(TicketStatus.RESOLVED)}
+              className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
+                selectedFilter === TicketStatus.RESOLVED
+                  ? "border-emerald-400/20 bg-emerald-400/[0.07]"
+                  : "border-white/[0.07] bg-[#10182a]/70 hover:border-emerald-400/15"
+              }`}
+            >
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-400">
+                    Rezolvate
+                  </p>
+
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {statusCounts[TicketStatus.RESOLVED]}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Așteaptă închiderea
+                  </p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
+                  <CheckCircle2 size={18} />
+                </div>
+              </div>
+            </Link>
+
+            <Link
+              href={getFilterUrl(TicketStatus.CLOSED)}
+              className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
+                selectedFilter === TicketStatus.CLOSED
+                  ? "border-slate-400/15 bg-slate-400/[0.06]"
+                  : "border-white/[0.07] bg-[#10182a]/70 hover:border-white/[0.12]"
+              }`}
+            >
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-sm font-medium text-slate-400">Închise</p>
+
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {statusCounts[TicketStatus.CLOSED]}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">Flux finalizat</p>
+                </div>
+
+                <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-slate-400/[0.08] text-slate-400 ring-1 ring-white/[0.05]">
+                  <XCircle size={18} />
+                </div>
+              </div>
+            </Link>
+          </div>
+        </section>
+
+        <section className="app-card overflow-hidden">
+          <div className="flex flex-col gap-5 border-b border-white/[0.07] px-6 py-5 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.65)]" />
+
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
+                  Ticket queue
                 </p>
               </div>
 
-              <div className="flex flex-wrap gap-2">
-                {filterOptions.map((option) => (
-                  <Link
-                    key={option.value}
-                    href={getFilterUrl(option.value)}
-                    className={`rounded-lg px-3 py-2 text-sm font-medium transition ${
-                      selectedFilter === option.value
-                        ? "bg-black text-white"
-                        : "bg-gray-100 text-gray-700 hover:bg-gray-200"
-                    }`}
-                  >
-                    {option.label}
-                  </Link>
-                ))}
-              </div>
+              <h2 className="mt-2 text-lg font-semibold text-slate-100">
+                Lista sesizări
+              </h2>
+
+              <p className="mt-1 text-sm text-slate-500">
+                Afișate: {tickets.length} din {allTickets.length}
+                {activeTickets > 0 && <> · {activeTickets} active</>}
+              </p>
+            </div>
+
+            <div className="flex flex-wrap gap-2">
+              {filterOptions.map((option) => (
+                <Link
+                  key={option.value}
+                  href={getFilterUrl(option.value)}
+                  className={`rounded-xl border px-3 py-2 text-xs font-medium transition ${
+                    selectedFilter === option.value
+                      ? "border-violet-400/20 bg-violet-500/[0.09] text-violet-200"
+                      : "border-white/[0.06] bg-white/[0.025] text-slate-500 hover:border-violet-400/15 hover:bg-violet-500/[0.04] hover:text-slate-300"
+                  }`}
+                >
+                  {option.label}
+                </Link>
+              ))}
             </div>
           </div>
 
           {tickets.length === 0 ? (
-            <div className="p-8 text-center">
-              <p className="text-sm font-medium text-gray-700">
-                Nu exista sesizari pentru filtrul selectat.
+            <div className="px-6 py-14 text-center">
+              <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl border border-white/[0.06] bg-white/[0.03] text-slate-500">
+                <LifeBuoy size={24} strokeWidth={1.7} />
+              </div>
+
+              <h3 className="mt-4 font-medium text-slate-300">
+                Nu există sesizări pentru filtrul selectat
+              </h3>
+
+              <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-slate-500">
+                Schimbă filtrul pentru a consulta alte sesizări din registru.
               </p>
 
               {selectedFilter !== "ALL" && (
                 <Link
                   href="/admin/sesizari"
-                  className="mt-3 inline-flex text-sm font-medium text-gray-900 underline"
+                  className="app-button-secondary mt-5 inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
                 >
-                  Vezi toate sesizarile
+                  <Inbox size={15} />
+                  Vezi toate sesizările
                 </Link>
               )}
             </div>
           ) : (
-            <div className="space-y-4 p-6">
+            <div className="space-y-4 p-5 sm:p-6">
               {tickets.map((ticket) => {
                 const nextStatus = nextTicketStatus[ticket.status];
 
                 const buttonLabel = nextStatusButtonLabels[ticket.status];
 
+                const StatusIcon = getStatusIcon(ticket.status);
+
                 return (
                   <article
                     key={ticket.id}
-                    className="rounded-2xl border border-gray-200 p-6"
+                    className="group relative overflow-hidden rounded-[20px] border border-white/[0.065] bg-white/[0.018] transition duration-200 hover:border-violet-400/15 hover:bg-violet-500/[0.02]"
                   >
-                    <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-3">
-                          <h3 className="text-lg font-semibold text-gray-900">
-                            {ticket.title}
-                          </h3>
+                    <div className="pointer-events-none absolute -right-20 -top-20 h-52 w-52 rounded-full bg-violet-500/[0.035] blur-3xl" />
 
-                          <span
-                            className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${getStatusClass(
-                              ticket.status,
-                            )}`}
-                          >
-                            {ticketStatusLabels[ticket.status]}
-                          </span>
+                    <div className="relative flex flex-col gap-6 p-5 sm:p-6 lg:flex-row lg:items-start lg:justify-between">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-start gap-3">
+                          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-[14px] bg-violet-500/[0.08] text-violet-300 ring-1 ring-violet-400/10">
+                            <MessageSquareText size={19} strokeWidth={1.8} />
+                          </div>
+
+                          <div className="min-w-0 flex-1">
+                            <div className="flex flex-wrap items-center gap-3">
+                              <h3 className="text-lg font-semibold tracking-[-0.025em] text-slate-100">
+                                {ticket.title}
+                              </h3>
+
+                              <span
+                                className={`inline-flex items-center gap-1.5 rounded-lg border px-2.5 py-1 text-xs font-medium ${getStatusClass(
+                                  ticket.status,
+                                )}`}
+                              >
+                                <StatusIcon size={12} />
+
+                                {ticketStatusLabels[ticket.status]}
+                              </span>
+                            </div>
+
+                            <p className="mt-1 text-xs text-slate-600">
+                              ID sesizare:{" "}
+                              <span className="font-mono">
+                                {ticket.id.slice(-8)}
+                              </span>
+                            </p>
+                          </div>
                         </div>
 
-                        <p className="mt-2 text-sm text-gray-600">
-                          Ap. {ticket.apartment.number} -{" "}
-                          {ticket.apartment.owner.name}
-                        </p>
+                        <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                          <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                              <Building2 size={12} />
+                              Apartament
+                            </p>
 
-                        <p className="mt-1 text-sm text-gray-600">
-                          {ticket.apartment.association.name}
-                        </p>
+                            <p className="mt-1.5 text-sm font-medium text-slate-300">
+                              Ap. {ticket.apartment.number}
+                            </p>
 
-                        <p className="mt-1 text-sm text-gray-600">
-                          Email locatar: {ticket.apartment.owner.email}
-                        </p>
+                            <p className="mt-0.5 truncate text-xs text-slate-600">
+                              {ticket.apartment.association.name}
+                            </p>
+                          </div>
 
-                        <p className="mt-1 text-sm text-gray-500">
-                          Trimisa la{" "}
-                          {ticket.createdAt.toLocaleDateString("ro-RO")}
-                        </p>
+                          <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                              <UserRound size={12} />
+                              Locatar
+                            </p>
+
+                            <p className="mt-1.5 truncate text-sm font-medium text-slate-300">
+                              {ticket.apartment.owner.name}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                              <Mail size={12} />
+                              Email
+                            </p>
+
+                            <p className="mt-1.5 truncate text-sm text-slate-400">
+                              {ticket.apartment.owner.email}
+                            </p>
+                          </div>
+
+                          <div className="rounded-xl border border-white/[0.05] bg-white/[0.02] p-3">
+                            <p className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-600">
+                              <CalendarDays size={12} />
+                              Trimisă
+                            </p>
+
+                            <p className="mt-1.5 text-sm font-medium text-slate-300">
+                              {ticket.createdAt.toLocaleDateString("ro-RO")}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="mt-5 rounded-2xl border border-white/[0.055] bg-[#0b1220]/55 p-4">
+                          <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">
+                            Descriere
+                          </p>
+
+                          <p className="mt-2 whitespace-pre-wrap text-sm leading-6 text-slate-400">
+                            {ticket.description}
+                          </p>
+                        </div>
 
                         {ticket.updatedAt.getTime() !==
                           ticket.createdAt.getTime() && (
-                          <p className="mt-1 text-sm text-gray-500">
+                          <div className="mt-3 flex items-center gap-2 text-xs text-slate-600">
+                            <Clock3 size={13} />
                             Ultima actualizare:{" "}
                             {ticket.updatedAt.toLocaleDateString("ro-RO")}
-                          </p>
+                          </div>
                         )}
-
-                        <p className="mt-4 whitespace-pre-wrap text-sm text-gray-700">
-                          {ticket.description}
-                        </p>
                       </div>
 
-                      <div className="w-full lg:w-60">
+                      <div className="w-full shrink-0 lg:w-[245px]">
                         {nextStatus && buttonLabel ? (
-                          <div className="rounded-xl bg-gray-50 p-4">
-                            <p className="text-xs font-medium uppercase tracking-wide text-gray-500">
-                              Urmatorul pas
+                          <div className="rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                              Următorul pas
                             </p>
 
-                            <p className="mt-2 text-sm font-medium text-gray-900">
-                              {ticketStatusLabels[nextStatus]}
-                            </p>
+                            <div className="mt-3 flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/[0.08] text-violet-300 ring-1 ring-violet-400/10">
+                                <ArrowRight size={16} />
+                              </div>
+
+                              <div>
+                                <p className="text-sm font-medium text-slate-300">
+                                  {ticketStatusLabels[nextStatus]}
+                                </p>
+
+                                <p className="mt-0.5 text-xs text-slate-600">
+                                  Tranziție permisă
+                                </p>
+                              </div>
+                            </div>
 
                             <form
                               action={updateTicketStatusAction}
@@ -344,20 +599,34 @@ export default async function AdminTicketsPage({
 
                               <button
                                 type="submit"
-                                className="w-full rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800"
+                                className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium"
                               >
                                 {buttonLabel}
+                                <ArrowRight size={15} />
                               </button>
                             </form>
                           </div>
                         ) : (
-                          <div className="rounded-xl bg-gray-50 p-4">
-                            <p className="text-sm font-medium text-gray-700">
-                              Sesizare inchisa
-                            </p>
+                          <div className="rounded-2xl border border-emerald-400/10 bg-emerald-400/[0.035] p-4">
+                            <div className="flex items-center gap-3">
+                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-400/[0.08] text-emerald-300 ring-1 ring-emerald-400/10">
+                                <CheckCircle2 size={17} />
+                              </div>
 
-                            <p className="mt-1 text-xs text-gray-500">
-                              Nu mai sunt necesare actiuni.
+                              <div>
+                                <p className="text-sm font-medium text-emerald-200">
+                                  Sesizare închisă
+                                </p>
+
+                                <p className="mt-0.5 text-xs text-slate-600">
+                                  Flux finalizat
+                                </p>
+                              </div>
+                            </div>
+
+                            <p className="mt-3 text-xs leading-5 text-slate-500">
+                              Nu mai sunt necesare acțiuni pentru această
+                              sesizare.
                             </p>
                           </div>
                         )}

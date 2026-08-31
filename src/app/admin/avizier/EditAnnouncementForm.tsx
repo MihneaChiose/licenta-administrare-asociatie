@@ -2,6 +2,7 @@
 
 import { type FormEvent, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle, Loader2, Pencil, Save, X } from "lucide-react";
 import { editAnnouncementAction } from "./actions";
 
 type EditAnnouncementFormProps = {
@@ -57,87 +58,129 @@ export function EditAnnouncementForm({
       <button
         type="button"
         onClick={() => setIsEditing(true)}
-        className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+        className="app-button-secondary inline-flex items-center gap-2 px-3.5 py-2 text-sm font-medium"
       >
-        Editeaza
+        <Pencil size={15} />
+        Editează
       </button>
     );
   }
 
   return (
-    <div className="mt-4 rounded-xl border border-gray-200 bg-gray-50 p-4">
-      <h4 className="text-sm font-semibold text-gray-900">Editeaza anuntul</h4>
+    <div className="basis-full w-full overflow-hidden rounded-2xl border border-violet-400/10 bg-violet-500/[0.025]">
+      <div className="flex items-center justify-between border-b border-white/[0.055] px-4 py-3.5">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-violet-500/[0.08] text-violet-300 ring-1 ring-violet-400/10">
+            <Pencil size={14} />
+          </div>
 
-      {error && (
-        <div className="mt-4 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
+          <div>
+            <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-violet-400/70">
+              Editare
+            </p>
 
-      <form onSubmit={handleSubmit} className="mt-4 space-y-4">
-        <input type="hidden" name="announcementId" value={announcementId} />
-
-        <div>
-          <label
-            htmlFor={`title-${announcementId}`}
-            className="text-sm font-medium text-gray-700"
-          >
-            Titlu
-          </label>
-
-          <input
-            id={`title-${announcementId}`}
-            name="title"
-            type="text"
-            required
-            minLength={3}
-            maxLength={100}
-            defaultValue={initialTitle}
-            disabled={isPending}
-            className="mt-1 w-full rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:border-black disabled:bg-gray-100"
-          />
+            <h4 className="mt-0.5 text-sm font-semibold text-slate-200">
+              Modifică anunțul
+            </h4>
+          </div>
         </div>
 
-        <div>
-          <label
-            htmlFor={`content-${announcementId}`}
-            className="text-sm font-medium text-gray-700"
-          >
-            Continut
-          </label>
+        <button
+          type="button"
+          onClick={handleCancel}
+          disabled={isPending}
+          aria-label="Închide editarea"
+          className="flex h-8 w-8 items-center justify-center rounded-lg border border-white/[0.06] bg-white/[0.025] text-slate-500 transition hover:bg-white/[0.05] hover:text-slate-300 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <X size={15} />
+        </button>
+      </div>
 
-          <textarea
-            id={`content-${announcementId}`}
-            name="content"
-            required
-            minLength={10}
-            maxLength={2000}
-            rows={6}
-            defaultValue={initialContent}
-            disabled={isPending}
-            className="mt-1 w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 outline-none focus:border-black disabled:bg-gray-100"
-          />
-        </div>
+      <div className="p-4">
+        {error && (
+          <div className="mb-4 flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.07] p-3.5 text-sm text-rose-300">
+            <AlertCircle size={16} className="mt-0.5 shrink-0" />
 
-        <div className="flex flex-wrap gap-2">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-lg bg-black px-4 py-2 text-sm font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
-          >
-            {isPending ? "Se salveaza..." : "Salveaza modificarile"}
-          </button>
+            <p>{error}</p>
+          </div>
+        )}
 
-          <button
-            type="button"
-            onClick={handleCancel}
-            disabled={isPending}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Renunta
-          </button>
-        </div>
-      </form>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <input type="hidden" name="announcementId" value={announcementId} />
+
+          <div>
+            <label
+              htmlFor={`title-${announcementId}`}
+              className="text-sm font-medium text-slate-300"
+            >
+              Titlu
+            </label>
+
+            <input
+              id={`title-${announcementId}`}
+              name="title"
+              type="text"
+              required
+              minLength={3}
+              maxLength={100}
+              defaultValue={initialTitle}
+              disabled={isPending}
+              className="app-input mt-2 px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          <div>
+            <label
+              htmlFor={`content-${announcementId}`}
+              className="text-sm font-medium text-slate-300"
+            >
+              Conținut
+            </label>
+
+            <textarea
+              id={`content-${announcementId}`}
+              name="content"
+              required
+              minLength={10}
+              maxLength={2000}
+              rows={6}
+              defaultValue={initialContent}
+              disabled={isPending}
+              className="app-input mt-2 resize-none px-3 py-3 leading-6 disabled:cursor-not-allowed disabled:opacity-50"
+            />
+          </div>
+
+          <div className="flex flex-wrap gap-2 pt-1">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="app-button-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
+            >
+              {isPending ? (
+                <>
+                  <Loader2 size={15} className="animate-spin" />
+                  Se salvează...
+                </>
+              ) : (
+                <>
+                  <Save size={15} />
+                  Salvează modificările
+                </>
+              )}
+            </button>
+
+            <button
+              type="button"
+              onClick={handleCancel}
+              disabled={isPending}
+              className="app-button-secondary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <X size={15} />
+              Renunță
+            </button>
+          </div>
+        </form>
+      </div>
     </div>
   );
 }

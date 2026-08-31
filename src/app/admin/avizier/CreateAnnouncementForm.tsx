@@ -3,6 +3,7 @@
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle, Building2, Loader2, Megaphone, Send } from "lucide-react";
 import { createAnnouncementAction } from "./actions";
 
 type AssociationOption = {
@@ -52,18 +53,20 @@ export function CreateAnnouncementForm({
   return (
     <>
       {error && (
-        <div className="mt-6 rounded-lg bg-red-50 p-4 text-sm text-red-700">
-          {error}
+        <div className="mt-5 flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.07] p-4 text-sm text-rose-300">
+          <AlertCircle size={17} className="mt-0.5 shrink-0" />
+
+          <p>{error}</p>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
         <div>
           <label
             htmlFor="associationId"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-medium text-slate-300"
           >
-            Asociatie
+            Asociație
           </label>
 
           {associations.length === 1 ? (
@@ -74,8 +77,20 @@ export function CreateAnnouncementForm({
                 value={associations[0].id}
               />
 
-              <div className="mt-1 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-700">
-                {associations[0].name}
+              <div className="mt-2 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/[0.035] px-3.5 py-3">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-cyan-400/10">
+                  <Building2 size={15} />
+                </div>
+
+                <div className="min-w-0">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
+                    Destinație
+                  </p>
+
+                  <p className="mt-0.5 truncate text-sm font-medium text-slate-300">
+                    {associations[0].name}
+                  </p>
+                </div>
               </div>
             </>
           ) : (
@@ -85,10 +100,10 @@ export function CreateAnnouncementForm({
               required
               defaultValue=""
               disabled={isPending}
-              className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black disabled:bg-gray-100"
+              className="app-input mt-2 px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50"
             >
               <option value="" disabled>
-                Selecteaza asociatia
+                Selectează asociația
               </option>
 
               {associations.map((association) => (
@@ -101,7 +116,7 @@ export function CreateAnnouncementForm({
         </div>
 
         <div>
-          <label htmlFor="title" className="text-sm font-medium text-gray-700">
+          <label htmlFor="title" className="text-sm font-medium text-slate-300">
             Titlu
           </label>
 
@@ -113,17 +128,21 @@ export function CreateAnnouncementForm({
             minLength={3}
             maxLength={100}
             disabled={isPending}
-            placeholder="Ex: Oprire apa calda"
-            className="mt-1 w-full rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black disabled:bg-gray-100"
+            placeholder="Ex: Oprire apă caldă"
+            className="app-input mt-2 px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50"
           />
+
+          <p className="mt-1.5 text-xs text-slate-600">
+            Între 3 și 100 de caractere.
+          </p>
         </div>
 
         <div>
           <label
             htmlFor="content"
-            className="text-sm font-medium text-gray-700"
+            className="text-sm font-medium text-slate-300"
           >
-            Continut
+            Conținut
           </label>
 
           <textarea
@@ -134,17 +153,42 @@ export function CreateAnnouncementForm({
             maxLength={2000}
             rows={8}
             disabled={isPending}
-            placeholder="Scrie anuntul pentru locatari..."
-            className="mt-1 w-full resize-none rounded-lg border border-gray-300 px-3 py-2 outline-none focus:border-black disabled:bg-gray-100"
+            placeholder="Scrie anunțul pentru locatari..."
+            className="app-input mt-2 resize-none px-3 py-3 leading-6 disabled:cursor-not-allowed disabled:opacity-50"
           />
+
+          <p className="mt-1.5 text-xs text-slate-600">
+            Mesajul poate avea maximum 2000 de caractere.
+          </p>
+        </div>
+
+        <div className="rounded-xl border border-violet-400/10 bg-violet-500/[0.035] p-3.5">
+          <div className="flex items-start gap-2.5">
+            <Megaphone size={16} className="mt-0.5 shrink-0 text-violet-300" />
+
+            <p className="text-xs leading-5 text-slate-500">
+              După publicare, anunțul devine vizibil locatarilor din asociația
+              selectată. Îl vei putea edita sau retrage ulterior.
+            </p>
+          </div>
         </div>
 
         <button
           type="submit"
           disabled={isPending}
-          className="w-full rounded-lg bg-black px-4 py-2 font-medium text-white hover:bg-gray-800 disabled:cursor-not-allowed disabled:bg-gray-400"
+          className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-medium disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isPending ? "Se publica..." : "Publica anuntul"}
+          {isPending ? (
+            <>
+              <Loader2 size={17} className="animate-spin" />
+              Se publică...
+            </>
+          ) : (
+            <>
+              <Send size={17} />
+              Publică anunțul
+            </>
+          )}
         </button>
       </form>
     </>
