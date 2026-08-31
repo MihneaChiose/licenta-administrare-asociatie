@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { AlertCircle, Ban, Loader2 } from "lucide-react";
 import { withdrawAnnouncementAction } from "./actions";
 
 type WithdrawAnnouncementButtonProps = {
@@ -18,7 +19,7 @@ export function WithdrawAnnouncementButton({
 
   function handleWithdraw() {
     const confirmed = window.confirm(
-      "Sigur doresti sa retragi acest anunt? Locatarii nu il vor mai vedea.",
+      "Sigur dorești să retragi acest anunț? Locatarii nu îl vor mai vedea.",
     );
 
     if (!confirmed) {
@@ -48,10 +49,12 @@ export function WithdrawAnnouncementButton({
   }
 
   return (
-    <div className="mt-4">
+    <div className="space-y-3">
       {error && (
-        <div className="mb-3 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-          {error}
+        <div className="flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.07] p-3.5 text-sm text-rose-300">
+          <AlertCircle size={16} className="mt-0.5 shrink-0" />
+
+          <p>{error}</p>
         </div>
       )}
 
@@ -59,9 +62,19 @@ export function WithdrawAnnouncementButton({
         type="button"
         onClick={handleWithdraw}
         disabled={isPending}
-        className="rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-700 hover:bg-red-50 disabled:cursor-not-allowed disabled:opacity-50"
+        className="inline-flex items-center gap-2 rounded-xl border border-rose-400/15 bg-rose-500/[0.035] px-3.5 py-2 text-sm font-medium text-rose-300 transition hover:border-rose-400/25 hover:bg-rose-500/[0.08] disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {isPending ? "Se retrage..." : "Retrage anuntul"}
+        {isPending ? (
+          <>
+            <Loader2 size={15} className="animate-spin" />
+            Se retrage...
+          </>
+        ) : (
+          <>
+            <Ban size={15} />
+            Retrage anunțul
+          </>
+        )}
       </button>
     </div>
   );

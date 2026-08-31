@@ -1,10 +1,24 @@
-import Link from "next/link";
+import {
+  BellRing,
+  Building2,
+  Calculator,
+  ClipboardList,
+  CreditCard,
+  Gauge,
+  Megaphone,
+  ReceiptText,
+  TriangleAlert,
+  UserRound,
+  UsersRound,
+  WalletCards,
+} from "lucide-react";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { AdminLayout } from "@/components/layout/AdminLayout";
+import { StatisticsCard } from "@/components/dashboard/StatisticsCard";
+import { DashboardActionCard } from "@/components/dashboard/DashboardActionCard";
 import { getSession } from "@/lib/session";
 import { getAdminDashboardStatistics } from "@/lib/dashboard/admin-statistics";
-import { StatisticsCard } from "@/components/dashboard/StatisticsCard";
 
 export default async function AdminDashboardPage() {
   const session = await getSession();
@@ -25,15 +39,25 @@ export default async function AdminDashboardPage() {
         title="Dashboard administrator"
         description={`Bine ai venit, ${session.name}.`}
       >
-        <div className="rounded-2xl bg-white p-6 shadow-sm ring-1 ring-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">
-            Asociație indisponibilă
-          </h2>
+        <div className="app-card relative overflow-hidden p-6 sm:p-8">
+          <div className="pointer-events-none absolute -right-20 -top-20 h-56 w-56 rounded-full bg-amber-400/[0.06] blur-3xl" />
 
-          <p className="mt-2 text-sm text-gray-600">
-            Contul dumneavoastră de administrator nu este asociat momentan unei
-            asociații.
-          </p>
+          <div className="relative flex items-start gap-4">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/10">
+              <TriangleAlert size={22} />
+            </div>
+
+            <div>
+              <h2 className="text-lg font-semibold text-slate-100">
+                Asociatie indisponibila
+              </h2>
+
+              <p className="mt-2 max-w-xl text-sm leading-6 text-slate-400">
+                Contul dumneavoastra de administrator nu este asociat momentan
+                unei asociatii.
+              </p>
+            </div>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -42,127 +66,152 @@ export default async function AdminDashboardPage() {
   return (
     <AdminLayout
       title="Dashboard administrator"
-      description={`Bine ai venit, ${session.name}.`}
+      description={`Bine ai venit, ${session.name}. Ai aici o imagine de ansamblu asupra activitatii asociatiei.`}
     >
-      <section>
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">
-          Situație generală
-        </h2>
+      <div className="space-y-10">
+        <section>
+          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.7)]" />
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          <StatisticsCard
-            title="Apartamente"
-            value={statistics.totalApartments}
-            description="Apartamente administrate"
-          />
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-400">
+                  Overview
+                </p>
+              </div>
 
-          <StatisticsCard
-            title="Locatari"
-            value={statistics.totalResidents}
-            description="Persoane declarate în apartamente"
-          />
+              <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
+                Situatie generala
+              </h2>
+            </div>
 
-          <StatisticsCard
-            title="Cheltuieli luna aceasta"
-            value={`${Number(statistics.totalExpenses).toFixed(2)} RON`}
-            description="Total cheltuieli în luna curentă"
-          />
-
-          <StatisticsCard
-            title="Facturi restante"
-            value={statistics.unpaidInvoices}
-            description="Facturi neachitate"
-          />
-
-          <StatisticsCard
-            title="Plăți în așteptare"
-            value={statistics.pendingPayments}
-            description="Plăți care necesită verificare"
-          />
-
-          <StatisticsCard
-            title="Sesizări active"
-            value={statistics.openTickets}
-            description="Sesizări deschise sau în lucru"
-          />
-        </div>
-      </section>
-
-      <section className="mt-8">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Gestionare</h2>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <Link
-            href="/admin/apartamente"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Apartamente</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Gestionare locatari si apartamente.
+            <p className="text-sm text-slate-500">
+              Indicatorii principali ai asociatiei
             </p>
-          </Link>
+          </div>
 
-          <Link
-            href="/admin/consumuri"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Indexuri contoare</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Vizualizare indexuri transmise de locatari.
-            </p>
-          </Link>
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+            <StatisticsCard
+              title="Apartamente"
+              value={statistics.totalApartments}
+              description="Apartamente administrate"
+              icon={Building2}
+              accent="violet"
+            />
 
-          <Link
-            href="/admin/cheltuieli"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Cheltuieli</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Introducere cheltuieli lunare.
-            </p>
-          </Link>
+            <StatisticsCard
+              title="Locatari"
+              value={statistics.totalResidents}
+              description="Persoane declarate in apartamente"
+              icon={UsersRound}
+              accent="cyan"
+            />
 
-          <Link
-            href="/admin/intretinere"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Intretinere</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Generare automata a listelor lunare de plata.
-            </p>
-          </Link>
+            <StatisticsCard
+              title="Cheltuieli luna aceasta"
+              value={`${Number(statistics.totalExpenses).toFixed(2)} RON`}
+              description="Total cheltuieli in luna curenta"
+              icon={ReceiptText}
+              accent="blue"
+            />
 
-          <Link
-            href="/admin/plati"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Plati</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Confirmare plati transmise de locatari.
-            </p>
-          </Link>
+            <StatisticsCard
+              title="Facturi restante"
+              value={statistics.unpaidInvoices}
+              description="Facturi care nu au fost achitate"
+              icon={WalletCards}
+              accent={statistics.unpaidInvoices > 0 ? "rose" : "emerald"}
+            />
 
-          <Link
-            href="/admin/sesizari"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Sesizari</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Monitorizare tichete trimise de locatari.
-            </p>
-          </Link>
+            <StatisticsCard
+              title="Plati in asteptare"
+              value={statistics.pendingPayments}
+              description="Plati care necesita verificare"
+              icon={CreditCard}
+              accent={statistics.pendingPayments > 0 ? "amber" : "emerald"}
+            />
 
-          <Link
-            href="/admin/avizier"
-            className="rounded-2xl bg-white p-6 shadow transition hover:-translate-y-1 hover:shadow-md"
-          >
-            <h2 className="font-semibold">Avizier</h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Publicare anunturi pentru locatari.
+            <StatisticsCard
+              title="Sesizari active"
+              value={statistics.openTickets}
+              description="Sesizari deschise sau aflate in lucru"
+              icon={BellRing}
+              accent={statistics.openTickets > 0 ? "amber" : "emerald"}
+            />
+          </div>
+        </section>
+
+        <section>
+          <div className="mb-5">
+            <div className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.65)]" />
+
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
+                Management
+              </p>
+            </div>
+
+            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
+              Acces rapid
+            </h2>
+
+            <p className="mt-1 text-sm text-slate-500">
+              Acceseaza direct principalele zone de administrare.
             </p>
-          </Link>
-        </div>
-      </section>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+            <DashboardActionCard
+              href="/admin/apartamente"
+              title="Apartamente"
+              description="Gestionare apartamente si datele locatarilor."
+              icon={UserRound}
+            />
+
+            <DashboardActionCard
+              href="/admin/consumuri"
+              title="Indexuri contoare"
+              description="Vizualizeaza indexurile transmise de locatari."
+              icon={Gauge}
+            />
+
+            <DashboardActionCard
+              href="/admin/cheltuieli"
+              title="Cheltuieli"
+              description="Introdu si gestioneaza cheltuielile asociatiei."
+              icon={ReceiptText}
+            />
+
+            <DashboardActionCard
+              href="/admin/intretinere"
+              title="Intretinere"
+              description="Genereaza si gestioneaza listele lunare de plata."
+              icon={Calculator}
+            />
+
+            <DashboardActionCard
+              href="/admin/plati"
+              title="Plati"
+              description="Verifica si confirma platile transmise."
+              icon={CreditCard}
+            />
+
+            <DashboardActionCard
+              href="/admin/sesizari"
+              title="Sesizari"
+              description="Monitorizeaza solicitarile transmise de locatari."
+              icon={ClipboardList}
+            />
+
+            <DashboardActionCard
+              href="/admin/avizier"
+              title="Avizier"
+              description="Publica si administreaza anunturile locatarilor."
+              icon={Megaphone}
+            />
+          </div>
+        </section>
+      </div>
     </AdminLayout>
   );
 }
