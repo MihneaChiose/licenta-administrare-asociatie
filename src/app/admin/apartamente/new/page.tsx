@@ -35,10 +35,7 @@ export default async function NewApartmentPage({
   const params = await searchParams;
 
   return (
-    <AdminLayout
-      title="Adauga apartament"
-      description="Creeaza un locatar nou si asociaza-l unui apartament din asociatia administrata."
-    >
+    <AdminLayout>
       <div className="mx-auto max-w-4xl">
         <Link
           href="/admin/apartamente"
@@ -156,18 +153,6 @@ export default async function NewApartmentPage({
                     </div>
                   </div>
                 </div>
-
-                <div className="mt-4 flex items-start gap-3 rounded-xl border border-blue-400/10 bg-blue-400/[0.045] p-4">
-                  <Info size={17} className="mt-0.5 shrink-0 text-blue-300" />
-
-                  <p className="text-sm leading-6 text-slate-400">
-                    Parola initiala pentru locatar va fi{" "}
-                    <span className="font-semibold text-slate-200">
-                      locatar123
-                    </span>
-                    .
-                  </p>
-                </div>
               </section>
 
               <div className="h-px bg-white/[0.07]" />
@@ -221,7 +206,7 @@ export default async function NewApartmentPage({
                       name="floor"
                       type="number"
                       required
-                      className="app-input mt-2 px-4 py-3"
+                      className="app-input mt-2 px-4 py-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       placeholder="Ex: 3"
                     />
                   </div>
@@ -238,9 +223,9 @@ export default async function NewApartmentPage({
                       id="surface"
                       name="surface"
                       type="number"
-                      step="0.01"
+                      step="0.1"
                       required
-                      className="app-input mt-2 px-4 py-3"
+                      className="app-input mt-2 px-4 py-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       placeholder="Ex: 55.5"
                     />
                   </div>
@@ -259,7 +244,7 @@ export default async function NewApartmentPage({
                       type="number"
                       min="1"
                       required
-                      className="app-input mt-2 px-4 py-3"
+                      className="app-input mt-2 px-4 py-3 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
                       placeholder="Ex: 2"
                     />
                   </div>

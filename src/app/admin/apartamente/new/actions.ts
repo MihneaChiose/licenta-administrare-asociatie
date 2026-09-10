@@ -12,7 +12,13 @@ const createApartmentSchema = z.object({
   tenantEmail: z.email("Email invalid"),
   apartmentNumber: z.string().min(1, "Numarul apartamentului este obligatoriu"),
   floor: z.coerce.number().int("Etajul trebuie sa fie numar intreg"),
-  surface: z.coerce.number().positive("Suprafata trebuie sa fie pozitiva"),
+  surface: z.coerce
+    .number()
+    .positive("Suprafata trebuie sa fie pozitiva")
+    .refine(
+      (value) => Math.abs(value * 10 - Math.round(value * 10)) < 1e-9,
+      "Suprafata poate avea maximum o zecimala",
+    ),
   numberOfResidents: z.coerce
     .number()
     .int("Numarul de persoane trebuie sa fie numar intreg")
