@@ -1,4 +1,4 @@
-import { Building2, Layers3, Plus, Ruler, UsersRound } from "lucide-react";
+import { Building2, Plus, Ruler, UsersRound } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
@@ -25,7 +25,6 @@ export default async function AdminApartmentsPage() {
     },
     include: {
       owner: true,
-      association: true,
     },
     orderBy: [
       {
@@ -47,15 +46,8 @@ export default async function AdminApartmentsPage() {
     0,
   );
 
-  const associationCount = new Set(
-    apartments.map((apartment) => apartment.associationId),
-  ).size;
-
   return (
-    <AdminLayout
-      title="Apartamente si locatari"
-      description="Gestioneaza apartamentele din asociatie si locatarii asociati."
-    >
+    <AdminLayout>
       <div className="mx-auto max-w-7xl space-y-8">
         <section>
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -86,7 +78,7 @@ export default async function AdminApartmentsPage() {
             </Link>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
             <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
@@ -154,30 +146,6 @@ export default async function AdminApartmentsPage() {
                 </div>
               </div>
             </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-400/[0.06] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Asociatii
-                  </p>
-
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {associationCount}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Cu apartamente active
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
-                  <Layers3 size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
           </div>
         </section>
 
@@ -195,10 +163,6 @@ export default async function AdminApartmentsPage() {
               <h2 className="mt-2 text-lg font-semibold text-slate-100">
                 Lista apartamente
               </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Total apartamente: {apartments.length}
-              </p>
             </div>
 
             <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs text-slate-500">
@@ -232,7 +196,7 @@ export default async function AdminApartmentsPage() {
             </div>
           ) : (
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[980px] text-left text-sm">
+              <table className="w-full min-w-[820px] text-left text-sm">
                 <thead>
                   <tr className="border-b border-white/[0.06] bg-white/[0.025]">
                     <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
@@ -258,10 +222,6 @@ export default async function AdminApartmentsPage() {
                     <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                       Email
                     </th>
-
-                    <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                      Asociatie
-                    </th>
                   </tr>
                 </thead>
 
@@ -272,14 +232,8 @@ export default async function AdminApartmentsPage() {
                       className="transition-colors duration-150 hover:bg-violet-500/[0.035]"
                     >
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-3">
-                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-xs font-semibold text-violet-300 ring-1 ring-violet-400/10">
-                            {apartment.number}
-                          </div>
-
-                          <span className="font-medium text-slate-200">
-                            Ap. {apartment.number}
-                          </span>
+                        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-500/10 text-xs font-semibold text-violet-300 ring-1 ring-violet-400/10">
+                          {apartment.number}
                         </div>
                       </td>
 
@@ -306,12 +260,6 @@ export default async function AdminApartmentsPage() {
 
                       <td className="px-6 py-4 text-slate-500">
                         {apartment.owner.email}
-                      </td>
-
-                      <td className="px-6 py-4">
-                        <span className="inline-flex rounded-lg border border-white/[0.07] bg-white/[0.035] px-2.5 py-1 text-xs font-medium text-slate-400">
-                          {apartment.association.name}
-                        </span>
                       </td>
                     </tr>
                   ))}
