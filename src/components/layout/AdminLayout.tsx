@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { getSession } from "@/lib/session";
 import { AppShell } from "./AppShell";
 
 type AdminLayoutProps = {
@@ -7,13 +8,20 @@ type AdminLayoutProps = {
   description?: string;
 };
 
-export function AdminLayout({
+export async function AdminLayout({
   children,
   title,
   description,
 }: AdminLayoutProps) {
+  const session = await getSession();
+
   return (
-    <AppShell role="admin" title={title} description={description}>
+    <AppShell
+      role="admin"
+      userName={session?.name}
+      title={title}
+      description={description}
+    >
       {children}
     </AppShell>
   );

@@ -1,7 +1,6 @@
 "use client";
 
 import {
-  Bell,
   Building2,
   Calculator,
   CircleGauge,
@@ -27,6 +26,7 @@ type AppRole = "admin" | "tenant";
 
 type AppShellProps = {
   role: AppRole;
+  userName?: string;
   children: ReactNode;
   title?: string;
   description?: string;
@@ -105,6 +105,7 @@ const tenantNavigation = [
 
 export function AppShell({
   role,
+  userName,
   children,
   title,
   description,
@@ -116,6 +117,10 @@ export function AppShell({
   const navigation = isAdmin ? adminNavigation : tenantNavigation;
 
   const roleLabel = isAdmin ? "Administrator" : "Locatar";
+
+  const firstName = userName?.trim().split(/\s+/)[0] || roleLabel;
+
+  const userInitial = firstName.charAt(0).toUpperCase();
 
   const panelLabel = isAdmin ? "Management workspace" : "Resident workspace";
 
@@ -251,30 +256,14 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Notificari"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-slate-400 transition hover:border-violet-400/20 hover:bg-violet-500/[0.07] hover:text-violet-300"
-              >
-                <Bell size={18} strokeWidth={1.8} />
-
-                <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-violet-400 ring-2 ring-[#090e1a]" />
-              </button>
-
-              <div className="hidden items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] py-1.5 pl-2 pr-3 sm:flex">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-semibold text-white">
-                  {isAdmin ? "A" : "L"}
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-slate-200">
-                    {roleLabel}
-                  </p>
-
-                  <p className="text-[10px] text-slate-500">Cont activ</p>
-                </div>
+            <div className="hidden items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] py-1.5 pl-2 pr-3 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-semibold text-white">
+                {userInitial}
               </div>
+
+              <p className="text-xs font-semibold text-slate-200">
+                {firstName}
+              </p>
             </div>
           </div>
         </header>
