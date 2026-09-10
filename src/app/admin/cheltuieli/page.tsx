@@ -298,7 +298,7 @@ export default async function AdminExpensesPage({
                         Categorie
                       </th>
 
-                      <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="w-[220px] px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Descriere
                       </th>
 
@@ -343,8 +343,8 @@ export default async function AdminExpensesPage({
                           </span>
                         </td>
 
-                        <td className="max-w-[320px] px-6 py-4">
-                          <p className="truncate text-slate-400">
+                        <td className="w-[220px] max-w-[220px] px-6 py-4">
+                          <p className="line-clamp-2 break-words leading-5 text-slate-400">
                             {expense.description || "—"}
                           </p>
                         </td>

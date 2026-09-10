@@ -143,7 +143,7 @@ export function ExpenseForm({
           id="description"
           name="description"
           type="text"
-          placeholder="Ex: Inlocuirea becurilor de pe scară"
+          placeholder="Ex: Factură apă rece"
           className="app-input mt-2 px-3 py-3"
         />
       </div>
