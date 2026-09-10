@@ -85,7 +85,7 @@ model User {
 model Association {
   id        String   @id @default(cuid())
   name      String
-  address   String
+  address   String?
   adminId   String
   createdAt DateTime @default(now())
 

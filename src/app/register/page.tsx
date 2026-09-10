@@ -1,21 +1,23 @@
 import {
   Building2,
-  LockKeyhole,
   Mail,
   ShieldCheck,
   Sparkles,
+  UserRound,
 } from "lucide-react";
-import { loginAction } from "./actions";
 import Link from "next/link";
+import { PasswordField } from "./PasswordField";
+import { registerAction } from "./actions";
 
-type LoginPageProps = {
+type RegisterPageProps = {
   searchParams: Promise<{
     error?: string;
-    success?: string;
   }>;
 };
 
-export default async function LoginPage({ searchParams }: LoginPageProps) {
+export default async function RegisterPage({
+  searchParams,
+}: RegisterPageProps) {
   const params = await searchParams;
 
   return (
@@ -46,7 +48,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               <div>
                 <div className="flex items-center gap-2">
                   <p className="font-semibold text-white">
-                    Administrare Asociatie
+                    Administrare Asociație
                   </p>
 
                   <Sparkles size={14} className="text-violet-300" />
@@ -59,9 +61,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
 
             <h1 className="mt-14 max-w-md text-4xl font-semibold leading-[1.08] tracking-[-0.045em] text-white">
-              Administrarea asociatiei,
+              Administrarea asociației,
               <span className="block bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-transparent">
-                simplificata digital.
+                simplificată digital.
               </span>
             </h1>
           </div>
@@ -82,16 +84,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
 
             <p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.2em] text-violet-400 lg:mt-0">
-              Bine ai revenit
+              Cont administrator
             </p>
 
             <h2 className="mt-2 text-3xl font-semibold tracking-[-0.04em] text-white">
-              Autentificare
+              Creează cont
             </h2>
-
-            <p className="mt-2 text-sm leading-6 text-slate-500">
-              Intra in cont pentru a accesa platforma.
-            </p>
 
             {params.error && (
               <div className="mt-6 rounded-xl border border-rose-400/15 bg-rose-500/[0.09] p-4 text-sm text-rose-300">
@@ -99,13 +97,35 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
               </div>
             )}
 
-            {params.success && (
-              <div className="mt-6 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.08] p-4 text-sm text-emerald-300">
-                {params.success}
-              </div>
-            )}
+            <form action={registerAction} className="mt-8 space-y-5">
+              <div>
+                <label
+                  htmlFor="name"
+                  className="text-sm font-medium text-slate-300"
+                >
+                  Nume
+                </label>
 
-            <form action={loginAction} className="mt-8 space-y-5">
+                <div className="relative mt-2">
+                  <UserRound
+                    size={17}
+                    className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600"
+                  />
+
+                  <input
+                    id="name"
+                    name="name"
+                    type="text"
+                    required
+                    minLength={2}
+                    maxLength={100}
+                    autoComplete="name"
+                    className="app-input py-3 pl-11 pr-4"
+                    placeholder="Nume complet"
+                  />
+                </div>
+              </div>
+
               <div>
                 <label
                   htmlFor="email"
@@ -132,28 +152,31 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 </div>
               </div>
 
-              <div>
+              <PasswordField />
+
+              <div className="border-t border-white/[0.06] pt-5">
                 <label
-                  htmlFor="password"
+                  htmlFor="associationName"
                   className="text-sm font-medium text-slate-300"
                 >
-                  Parola
+                  Denumirea asociației
                 </label>
 
                 <div className="relative mt-2">
-                  <LockKeyhole
+                  <Building2
                     size={17}
                     className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600"
                   />
 
                   <input
-                    id="password"
-                    name="password"
-                    type="password"
+                    id="associationName"
+                    name="associationName"
+                    type="text"
                     required
-                    autoComplete="current-password"
+                    minLength={3}
+                    maxLength={150}
                     className="app-input py-3 pl-11 pr-4"
-                    placeholder="Introdu parola"
+                    placeholder="Ex: Asociația Bloc A1"
                   />
                 </div>
               </div>
@@ -162,16 +185,17 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 type="submit"
                 className="app-button-primary w-full px-4 py-3 font-medium"
               >
-                Intra in cont
+                Creează cont
               </button>
             </form>
+
             <p className="mt-6 text-center text-sm text-slate-500">
-              Nu ai cont de administrator?{" "}
+              Ai deja cont?{" "}
               <Link
-                href="/register"
+                href="/login"
                 className="font-medium text-violet-300 transition hover:text-violet-200"
               >
-                Creează cont
+                Autentifică-te
               </Link>
             </p>
           </div>
