@@ -1,5 +1,4 @@
 import {
-  Building2,
   CalendarDays,
   CheckCircle2,
   CircleDot,
@@ -29,7 +28,6 @@ const ticketStatusLabels: Record<TicketStatus, string> = {
   OPEN: "Deschisă",
   IN_PROGRESS: "În lucru",
   RESOLVED: "Rezolvată",
-  CLOSED: "Închisă",
 };
 
 function getStatusClass(status: TicketStatus) {
@@ -39,10 +37,6 @@ function getStatusClass(status: TicketStatus) {
 
   if (status === TicketStatus.IN_PROGRESS) {
     return "border-amber-400/15 bg-amber-400/[0.07] text-amber-300";
-  }
-
-  if (status === TicketStatus.CLOSED) {
-    return "border-slate-400/10 bg-slate-400/[0.06] text-slate-400";
   }
 
   return "border-blue-400/15 bg-blue-400/[0.07] text-blue-300";
@@ -57,18 +51,10 @@ function getStatusIcon(status: TicketStatus) {
     return Clock3;
   }
 
-  if (status === TicketStatus.CLOSED) {
-    return CheckCircle2;
-  }
-
   return CircleDot;
 }
 
 function getTicketStep(status: TicketStatus) {
-  if (status === TicketStatus.CLOSED) {
-    return 4;
-  }
-
   if (status === TicketStatus.RESOLVED) {
     return 3;
   }
@@ -93,10 +79,6 @@ const progressSteps = [
     step: 3,
     label: "Rezolvată",
   },
-  {
-    step: 4,
-    label: "Închisă",
-  },
 ];
 
 export default async function TenantTicketsPage({
@@ -119,8 +101,8 @@ export default async function TenantTicketsPage({
       ownerId: session.id,
     },
 
-    include: {
-      association: true,
+    select: {
+      id: true,
     },
 
     orderBy: {
@@ -130,10 +112,7 @@ export default async function TenantTicketsPage({
 
   if (apartments.length === 0) {
     return (
-      <TenantLayout
-        title="Sesizările mele"
-        description="Trimite și urmărește sesizările către administrator."
-      >
+      <TenantLayout title="Sesizări">
         <div className="mx-auto max-w-4xl">
           <div className="app-card relative overflow-hidden p-8">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-400/[0.05] blur-3xl" />
@@ -169,14 +148,6 @@ export default async function TenantTicketsPage({
       },
     },
 
-    include: {
-      apartment: {
-        include: {
-          association: true,
-        },
-      },
-    },
-
     orderBy: {
       createdAt: "desc",
     },
@@ -194,17 +165,10 @@ export default async function TenantTicketsPage({
     (ticket) => ticket.status === TicketStatus.RESOLVED,
   );
 
-  const closedTickets = tickets.filter(
-    (ticket) => ticket.status === TicketStatus.CLOSED,
-  );
-
-  const finishedTickets = resolvedTickets.length + closedTickets.length;
+  const finishedTickets = resolvedTickets.length;
 
   return (
-    <TenantLayout
-      title="Sesizările mele"
-      description="Trimite și urmărește sesizările către administrator."
-    >
+    <TenantLayout title="Sesizări">
       <div className="mx-auto max-w-7xl space-y-8">
         {params.error && (
           <div className="flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.08] p-4 text-sm leading-6 text-rose-300">
@@ -233,13 +197,8 @@ export default async function TenantTicketsPage({
             </div>
 
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
-              Centrul meu de sesizări
+              Sesizările mele
             </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Raportează probleme către administrator și urmărește evoluția
-              fiecărei solicitări.
-            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -324,9 +283,7 @@ export default async function TenantTicketsPage({
                     {finishedTickets}
                   </p>
 
-                  <p className="mt-2 text-xs text-slate-500">
-                    Rezolvate sau închise
-                  </p>
+                  <p className="mt-2 text-xs text-slate-500">Rezolvate</p>
                 </div>
 
                 <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
@@ -357,70 +314,10 @@ export default async function TenantTicketsPage({
                   </h2>
                 </div>
               </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Descrie problema observată și selectează apartamentul pentru
-                care dorești să o raportezi.
-              </p>
             </div>
 
             <div className="relative p-6">
               <form action={createTicketAction} className="space-y-5">
-                <div>
-                  <label
-                    htmlFor="apartmentId"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    Apartament
-                  </label>
-
-                  {apartments.length === 1 ? (
-                    <>
-                      <input
-                        type="hidden"
-                        name="apartmentId"
-                        value={apartments[0].id}
-                      />
-
-                      <div className="mt-2 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/[0.035] px-3.5 py-3">
-                        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-cyan-400/10">
-                          <Building2 size={15} />
-                        </div>
-
-                        <div className="min-w-0">
-                          <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                            Apartament selectat
-                          </p>
-
-                          <p className="mt-0.5 truncate text-sm font-medium text-slate-300">
-                            Ap. {apartments[0].number} ·{" "}
-                            {apartments[0].association.name}
-                          </p>
-                        </div>
-                      </div>
-                    </>
-                  ) : (
-                    <select
-                      id="apartmentId"
-                      name="apartmentId"
-                      required
-                      defaultValue=""
-                      className="app-input mt-2 px-3 py-3"
-                    >
-                      <option value="" disabled>
-                        Selectează apartamentul
-                      </option>
-
-                      {apartments.map((apartment) => (
-                        <option key={apartment.id} value={apartment.id}>
-                          Apartament {apartment.number} -{" "}
-                          {apartment.association.name}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-
                 <div>
                   <label
                     htmlFor="title"
@@ -439,10 +336,6 @@ export default async function TenantTicketsPage({
                     placeholder="Ex: Bec ars pe scară"
                     className="app-input mt-2 px-3 py-3"
                   />
-
-                  <p className="mt-1.5 text-xs text-slate-600">
-                    Folosește un titlu scurt și ușor de identificat.
-                  </p>
                 </div>
 
                 <div>
@@ -469,20 +362,6 @@ export default async function TenantTicketsPage({
                   </p>
                 </div>
 
-                <div className="rounded-xl border border-blue-400/10 bg-blue-400/[0.035] p-3.5">
-                  <div className="flex items-start gap-2.5">
-                    <LifeBuoy
-                      size={16}
-                      className="mt-0.5 shrink-0 text-blue-300"
-                    />
-
-                    <p className="text-xs leading-5 text-slate-500">
-                      Sesizarea va fi creată cu statusul inițial „Deschisă”.
-                      Administratorul va gestiona ulterior progresul acesteia.
-                    </p>
-                  </div>
-                </div>
-
                 <button
                   type="submit"
                   className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-medium"
@@ -495,29 +374,18 @@ export default async function TenantTicketsPage({
           </section>
 
           <section className="app-card overflow-hidden">
-            <div className="flex flex-col gap-3 border-b border-white/[0.07] px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
-              <div>
-                <div className="flex items-center gap-2">
-                  <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.65)]" />
+            <div className="border-b border-white/[0.07] px-6 py-5">
+              <div className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.65)]" />
 
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
-                    Support history
-                  </p>
-                </div>
-
-                <h2 className="mt-2 text-lg font-semibold text-slate-100">
-                  Istoric sesizări
-                </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Total sesizări: {tickets.length}
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
+                  Support history
                 </p>
               </div>
 
-              <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs text-slate-500">
-                <MessageSquareText size={14} />
-                {openTickets.length + inProgressTickets.length} active
-              </div>
+              <h2 className="mt-2 text-lg font-semibold text-slate-100">
+                Istoric
+              </h2>
             </div>
 
             {tickets.length === 0 ? (
@@ -537,7 +405,7 @@ export default async function TenantTicketsPage({
               </div>
             ) : (
               <div className="space-y-4 p-5 sm:p-6">
-                {tickets.map((ticket, index) => {
+                {tickets.map((ticket) => {
                   const StatusIcon = getStatusIcon(ticket.status);
 
                   const currentStep = getTicketStep(ticket.status);
@@ -557,30 +425,14 @@ export default async function TenantTicketsPage({
                             </div>
 
                             <div className="min-w-0">
-                              <div className="flex flex-wrap items-center gap-2.5">
-                                <h3 className="text-lg font-semibold tracking-[-0.025em] text-slate-100">
-                                  {ticket.title}
-                                </h3>
+                              <h3 className="text-lg font-semibold tracking-[-0.025em] text-slate-100">
+                                {ticket.title}
+                              </h3>
 
-                                {index === 0 && (
-                                  <span className="rounded-lg border border-violet-400/10 bg-violet-500/[0.06] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-violet-300">
-                                    Recent
-                                  </span>
-                                )}
-                              </div>
-
-                              <div className="mt-2 flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
-                                <div className="flex items-center gap-1.5">
-                                  <Building2 size={13} />
-                                  Ap. {ticket.apartment.number} ·{" "}
-                                  {ticket.apartment.association.name}
-                                </div>
-
-                                <div className="flex items-center gap-1.5">
-                                  <CalendarDays size={13} />
-                                  Trimisă{" "}
-                                  {ticket.createdAt.toLocaleDateString("ro-RO")}
-                                </div>
+                              <div className="mt-2 flex items-center gap-1.5 text-xs text-slate-500">
+                                <CalendarDays size={13} />
+                                Trimisă{" "}
+                                {ticket.createdAt.toLocaleDateString("ro-RO")}
                               </div>
                             </div>
                           </div>
@@ -608,19 +460,12 @@ export default async function TenantTicketsPage({
 
                         <div className="mt-5 rounded-2xl border border-white/[0.055] bg-white/[0.018] p-4">
                           <div className="flex items-center justify-between gap-3">
-                            <div>
-                              <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">
-                                Progres sesizare
-                              </p>
-
-                              <p className="mt-1 text-xs text-slate-500">
-                                Status curent:{" "}
-                                {ticketStatusLabels[ticket.status]}
-                              </p>
-                            </div>
+                            <p className="text-[10px] font-semibold uppercase tracking-[0.13em] text-slate-600">
+                              Progres sesizare
+                            </p>
 
                             <span className="text-xs font-medium tabular-nums text-slate-600">
-                              {currentStep}/4
+                              {currentStep}/3
                             </span>
                           </div>
 
@@ -643,12 +488,12 @@ export default async function TenantTicketsPage({
                                         className={`flex h-7 w-7 items-center justify-center rounded-full border transition ${
                                           completed
                                             ? current
-                                              ? "border-violet-400/30 bg-violet-500/15 text-violet-200 shadow-[0_0_16px_rgba(139,92,246,0.18)]"
+                                              ? "border-emerald-400/30 bg-emerald-400/[0.08] text-emerald-300 shadow-[0_0_16px_rgba(139,92,246,0.28)]"
                                               : "border-emerald-400/20 bg-emerald-400/[0.08] text-emerald-300"
                                             : "border-white/[0.07] bg-white/[0.025] text-slate-700"
                                         }`}
                                       >
-                                        {completed && !current ? (
+                                        {completed ? (
                                           <CheckCircle2 size={13} />
                                         ) : (
                                           <span className="text-[10px] font-semibold">

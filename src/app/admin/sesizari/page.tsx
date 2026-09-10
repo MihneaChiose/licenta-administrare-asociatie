@@ -34,19 +34,16 @@ const ticketStatusLabels: Record<TicketStatus, string> = {
   OPEN: "Deschisă",
   IN_PROGRESS: "În lucru",
   RESOLVED: "Rezolvată",
-  CLOSED: "Închisă",
 };
 
 const nextTicketStatus: Partial<Record<TicketStatus, TicketStatus>> = {
   [TicketStatus.OPEN]: TicketStatus.IN_PROGRESS,
   [TicketStatus.IN_PROGRESS]: TicketStatus.RESOLVED,
-  [TicketStatus.RESOLVED]: TicketStatus.CLOSED,
 };
 
 const nextStatusButtonLabels: Partial<Record<TicketStatus, string>> = {
   [TicketStatus.OPEN]: "Preia în lucru",
   [TicketStatus.IN_PROGRESS]: "Marchează rezolvată",
-  [TicketStatus.RESOLVED]: "Închide sesizarea",
 };
 
 const filterOptions: Array<{
@@ -69,10 +66,6 @@ const filterOptions: Array<{
     value: TicketStatus.RESOLVED,
     label: "Rezolvate",
   },
-  {
-    value: TicketStatus.CLOSED,
-    label: "Închise",
-  },
 ];
 
 function getStatusClass(status: TicketStatus) {
@@ -82,10 +75,6 @@ function getStatusClass(status: TicketStatus) {
 
   if (status === TicketStatus.IN_PROGRESS) {
     return "border-amber-400/15 bg-amber-400/[0.07] text-amber-300";
-  }
-
-  if (status === TicketStatus.CLOSED) {
-    return "border-slate-400/10 bg-slate-400/[0.06] text-slate-400";
   }
 
   return "border-blue-400/15 bg-blue-400/[0.07] text-blue-300";
@@ -98,10 +87,6 @@ function getStatusIcon(status: TicketStatus) {
 
   if (status === TicketStatus.IN_PROGRESS) {
     return Clock3;
-  }
-
-  if (status === TicketStatus.CLOSED) {
-    return XCircle;
   }
 
   return CircleDot;
@@ -182,10 +167,6 @@ export default async function AdminTicketsPage({
     [TicketStatus.RESOLVED]: allTickets.filter(
       (ticket) => ticket.status === TicketStatus.RESOLVED,
     ).length,
-
-    [TicketStatus.CLOSED]: allTickets.filter(
-      (ticket) => ticket.status === TicketStatus.CLOSED,
-    ).length,
   };
 
   const activeTickets =
@@ -233,7 +214,7 @@ export default async function AdminTicketsPage({
             </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
             <Link
               href={getFilterUrl("ALL")}
               className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
@@ -333,38 +314,11 @@ export default async function AdminTicketsPage({
                     {statusCounts[TicketStatus.RESOLVED]}
                   </p>
 
-                  <p className="mt-2 text-xs text-slate-500">
-                    Așteaptă închiderea
-                  </p>
+                  <p className="mt-2 text-xs text-slate-500">Flux finalizat</p>
                 </div>
 
                 <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
                   <CheckCircle2 size={18} />
-                </div>
-              </div>
-            </Link>
-
-            <Link
-              href={getFilterUrl(TicketStatus.CLOSED)}
-              className={`group relative overflow-hidden rounded-[20px] border p-5 transition duration-200 hover:-translate-y-1 ${
-                selectedFilter === TicketStatus.CLOSED
-                  ? "border-slate-400/15 bg-slate-400/[0.06]"
-                  : "border-white/[0.07] bg-[#10182a]/70 hover:border-white/[0.12]"
-              }`}
-            >
-              <div className="relative flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">Închise</p>
-
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {statusCounts[TicketStatus.CLOSED]}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">Flux finalizat</p>
-                </div>
-
-                <div className="flex h-10 w-10 items-center justify-center rounded-[13px] bg-slate-400/[0.08] text-slate-400 ring-1 ring-white/[0.05]">
-                  <XCircle size={18} />
                 </div>
               </div>
             </Link>
@@ -615,7 +569,7 @@ export default async function AdminTicketsPage({
 
                               <div>
                                 <p className="text-sm font-medium text-emerald-200">
-                                  Sesizare închisă
+                                  Sesizare rezolvată
                                 </p>
 
                                 <p className="mt-0.5 text-xs text-slate-600">
