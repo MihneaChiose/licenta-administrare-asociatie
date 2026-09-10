@@ -3,10 +3,8 @@ import {
   CalendarDays,
   CheckCircle2,
   ChevronDown,
-  CircleDollarSign,
   FileText,
   Info,
-  LockKeyhole,
   RefreshCw,
   Rocket,
   TriangleAlert,
@@ -23,9 +21,9 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import {
   calculateMaintenanceListAction,
-  closeMaintenanceListAction,
   publishMaintenanceListAction,
 } from "./actions";
+import { MaintenancePeriodForm } from "./MaintenancePeriodForm";
 
 type MaintenancePageProps = {
   searchParams: Promise<{
@@ -53,7 +51,7 @@ const maintenanceListStatusLabels: Record<MaintenanceListStatus, string> = {
   DRAFT: "Draft",
   CALCULATED: "Calculată",
   PUBLISHED: "Publicată",
-  CLOSED: "Închisă",
+  CLOSED: "Publicată",
 };
 
 const invoiceStatusLabels: Record<InvoiceStatus, string> = {
@@ -67,7 +65,7 @@ const maintenanceListStatusStyles: Record<MaintenanceListStatus, string> = {
   DRAFT: "border-amber-400/15 bg-amber-400/[0.07] text-amber-300",
   CALCULATED: "border-blue-400/15 bg-blue-400/[0.07] text-blue-300",
   PUBLISHED: "border-emerald-400/15 bg-emerald-400/[0.07] text-emerald-300",
-  CLOSED: "border-slate-400/10 bg-slate-400/[0.06] text-slate-400",
+  CLOSED: "border-emerald-400/15 bg-emerald-400/[0.07] text-emerald-300",
 };
 
 const invoiceStatusStyles: Record<InvoiceStatus, string> = {
@@ -97,12 +95,21 @@ export default async function AdminMaintenancePage({
 
   const params = await searchParams;
 
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+
   const maintenanceLists = await prisma.maintenanceList.findMany({
     where: {
       association: {
         adminId: session.id,
       },
+
+      status: {
+        not: MaintenanceListStatus.DRAFT,
+      },
     },
+
     include: {
       invoices: {
         include: {
@@ -111,10 +118,12 @@ export default async function AdminMaintenancePage({
               owner: true,
             },
           },
+
           items: true,
         },
       },
     },
+
     orderBy: [
       {
         year: "desc",
@@ -125,33 +134,28 @@ export default async function AdminMaintenancePage({
     ],
   });
 
-  const currentDate = new Date();
-  const currentMonth = currentDate.getMonth() + 1;
-  const currentYear = currentDate.getFullYear();
-
   const allInvoices = maintenanceLists.flatMap(
     (maintenanceList) => maintenanceList.invoices,
-  );
-
-  const publishedLists = maintenanceLists.filter(
-    (maintenanceList) =>
-      maintenanceList.status === MaintenanceListStatus.PUBLISHED,
-  ).length;
-
-  const totalGeneratedAmount = allInvoices.reduce(
-    (total, invoice) => total + Number(invoice.totalAmount.toString()),
-    0,
   );
 
   const unpaidInvoices = allInvoices.filter(
     (invoice) => invoice.status === InvoiceStatus.UNPAID,
   ).length;
 
+  const currentMaintenanceList = maintenanceLists.find(
+    (maintenanceList) =>
+      maintenanceList.month === currentMonth &&
+      maintenanceList.year === currentYear,
+  );
+
+  const currentListStatus = !currentMaintenanceList
+    ? "NEGENERATA"
+    : currentMaintenanceList.status === MaintenanceListStatus.CALCULATED
+      ? "GENERATA"
+      : "PUBLICATA";
+
   return (
-    <AdminLayout
-      title="Liste de întreținere"
-      description="Calculează, verifică și publică listele lunare de întreținere."
-    >
+    <AdminLayout title="Liste de întreținere">
       <div className="mx-auto max-w-7xl space-y-8">
         <section>
           <div className="mb-5">
@@ -166,28 +170,24 @@ export default async function AdminMaintenancePage({
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
               Situație întreținere
             </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Monitorizează listele generate și starea facturilor asociate.
-            </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">
-                    Liste generate
+                    Status lista curentă
                   </p>
 
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {maintenanceLists.length}
+                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {currentListStatus}
                   </p>
 
                   <p className="mt-2 text-xs text-slate-500">
-                    Perioade înregistrate
+                    {monthNames[currentMonth]} {currentYear}
                   </p>
                 </div>
 
@@ -198,67 +198,21 @@ export default async function AdminMaintenancePage({
             </div>
 
             <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-400/[0.06] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Liste publicate
-                  </p>
-
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {publishedLists}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Vizibile locatarilor
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
-                  <CheckCircle2 size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-400/[0.07] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Total generat
-                  </p>
-
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {moneyFormatter.format(totalGeneratedAmount)}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    RON în toate listele
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-blue-400/10 text-blue-300 ring-1 ring-blue-400/10">
-                  <CircleDollarSign size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-rose-400/[0.06] blur-3xl" />
 
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">
-                    Facturi neplătite
+                    Facturi neachitate
                   </p>
 
                   <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
                     {unpaidInvoices}
                   </p>
 
-                  <p className="mt-2 text-xs text-slate-500">Status UNPAID</p>
+                  <p className="mt-2 text-xs text-slate-500">
+                    Status NEPLĂTITĂ
+                  </p>
                 </div>
 
                 <div
@@ -295,11 +249,6 @@ export default async function AdminMaintenancePage({
                   </h2>
                 </div>
               </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Selectează perioada pentru care vrei să rulezi motorul de
-                calcul.
-              </p>
             </div>
 
             <div className="relative p-6">
@@ -319,140 +268,10 @@ export default async function AdminMaintenancePage({
                 </div>
               )}
 
-              <form
-                action={calculateMaintenanceListAction}
-                className="space-y-5"
-              >
-                <div>
-                  <label
-                    htmlFor="month"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    Luna
-                  </label>
-
-                  <select
-                    id="month"
-                    name="month"
-                    defaultValue={currentMonth}
-                    className="app-input mt-2 px-3 py-3"
-                  >
-                    {Object.entries(monthNames).map(([value, label]) => (
-                      <option key={value} value={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="year"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    An
-                  </label>
-
-                  <input
-                    id="year"
-                    name="year"
-                    type="number"
-                    defaultValue={currentYear}
-                    required
-                    className="app-input mt-2 px-3 py-3"
-                  />
-                </div>
-
-                <button
-                  type="submit"
-                  className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-medium"
-                >
-                  <Calculator size={17} />
-                  Calculează lista
-                </button>
-              </form>
-
-              <div className="mt-6 rounded-2xl border border-white/[0.06] bg-white/[0.025] p-4">
-                <div className="flex items-center gap-2">
-                  <Info size={16} className="text-blue-300" />
-
-                  <p className="text-sm font-semibold text-slate-300">
-                    Fluxul listei
-                  </p>
-                </div>
-
-                <div className="mt-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-400/[0.08] text-xs font-semibold text-amber-300">
-                      1
-                    </span>
-
-                    <div>
-                      <p className="text-sm font-medium text-slate-300">
-                        Draft
-                      </p>
-
-                      <p className="text-xs text-slate-600">
-                        Perioada este creată.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="ml-3 h-3 border-l border-white/[0.08]" />
-
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-blue-400/[0.08] text-xs font-semibold text-blue-300">
-                      2
-                    </span>
-
-                    <div>
-                      <p className="text-sm font-medium text-slate-300">
-                        Calculată
-                      </p>
-
-                      <p className="text-xs text-slate-600">
-                        Sumele pot fi verificate și recalculate.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="ml-3 h-3 border-l border-white/[0.08]" />
-
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-400/[0.08] text-xs font-semibold text-emerald-300">
-                      3
-                    </span>
-
-                    <div>
-                      <p className="text-sm font-medium text-slate-300">
-                        Publicată
-                      </p>
-
-                      <p className="text-xs text-slate-600">
-                        Lista devine vizibilă locatarilor.
-                      </p>
-                    </div>
-                  </div>
-
-                  <div className="ml-3 h-3 border-l border-white/[0.08]" />
-
-                  <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-slate-400/[0.08] text-xs font-semibold text-slate-400">
-                      4
-                    </span>
-
-                    <div>
-                      <p className="text-sm font-medium text-slate-300">
-                        Închisă
-                      </p>
-
-                      <p className="text-xs text-slate-600">
-                        Lifecycle-ul perioadei este finalizat.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <MaintenancePeriodForm
+                currentMonth={currentMonth}
+                currentYear={currentYear}
+              />
             </div>
           </section>
 
@@ -470,10 +289,6 @@ export default async function AdminMaintenancePage({
                 <h2 className="mt-2 text-lg font-semibold text-slate-100">
                   Liste lunare
                 </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Total liste: {maintenanceLists.length}
-                </p>
               </div>
 
               <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs text-slate-500">
@@ -573,19 +388,6 @@ export default async function AdminMaintenancePage({
                                 </span>
                               </div>
                             )}
-
-                            {maintenanceList.closedAt && (
-                              <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                                <LockKeyhole size={13} />
-
-                                <span>
-                                  Închisă{" "}
-                                  {maintenanceList.closedAt.toLocaleDateString(
-                                    "ro-RO",
-                                  )}
-                                </span>
-                              </div>
-                            )}
                           </div>
                         </div>
 
@@ -597,42 +399,14 @@ export default async function AdminMaintenancePage({
 
                             <p className="mt-1 text-2xl font-semibold tracking-[-0.04em] text-slate-100">
                               {moneyFormatter.format(totalAmount)}
+
                               <span className="ml-1.5 text-sm font-medium text-slate-500">
                                 RON
                               </span>
                             </p>
-
-                            <p className="mt-1 text-xs text-slate-600">
-                              {invoices.length} facturi
-                            </p>
                           </div>
 
                           <div className="flex flex-wrap gap-2">
-                            {maintenanceList.status ===
-                              MaintenanceListStatus.DRAFT && (
-                              <form action={calculateMaintenanceListAction}>
-                                <input
-                                  type="hidden"
-                                  name="month"
-                                  value={maintenanceList.month}
-                                />
-
-                                <input
-                                  type="hidden"
-                                  name="year"
-                                  value={maintenanceList.year}
-                                />
-
-                                <button
-                                  type="submit"
-                                  className="app-button-primary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
-                                >
-                                  <Calculator size={15} />
-                                  Calculează
-                                </button>
-                              </form>
-                            )}
-
                             {maintenanceList.status ===
                               MaintenanceListStatus.CALCULATED && (
                               <>
@@ -675,25 +449,6 @@ export default async function AdminMaintenancePage({
                                 </form>
                               </>
                             )}
-
-                            {maintenanceList.status ===
-                              MaintenanceListStatus.PUBLISHED && (
-                              <form action={closeMaintenanceListAction}>
-                                <input
-                                  type="hidden"
-                                  name="maintenanceListId"
-                                  value={maintenanceList.id}
-                                />
-
-                                <button
-                                  type="submit"
-                                  className="app-button-secondary inline-flex items-center gap-2 px-4 py-2.5 text-sm font-medium"
-                                >
-                                  <LockKeyhole size={15} />
-                                  Închide lista
-                                </button>
-                              </form>
-                            )}
                           </div>
                         </div>
                       </div>
@@ -708,26 +463,26 @@ export default async function AdminMaintenancePage({
                         </div>
                       ) : (
                         <div className="overflow-x-auto">
-                          <table className="w-full min-w-[850px] text-left text-sm">
+                          <table className="w-full min-w-[720px] text-left text-sm">
                             <thead>
                               <tr className="border-b border-white/[0.055] bg-white/[0.022]">
-                                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                                   Apartament
                                 </th>
 
-                                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                                   Locatar
                                 </th>
 
-                                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                                   Total
                                 </th>
 
-                                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                                   Status plată
                                 </th>
 
-                                <th className="px-5 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                                <th className="px-4 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                                   Calcul
                                 </th>
                               </tr>
@@ -739,17 +494,17 @@ export default async function AdminMaintenancePage({
                                   key={invoice.id}
                                   className="align-top transition-colors duration-150 hover:bg-violet-500/[0.03]"
                                 >
-                                  <td className="px-5 py-4">
+                                  <td className="px-4 py-4">
                                     <span className="inline-flex rounded-lg border border-violet-400/10 bg-violet-500/[0.07] px-2.5 py-1 text-xs font-semibold text-violet-300">
-                                      Ap. {invoice.apartment.number}
+                                      {invoice.apartment.number}
                                     </span>
                                   </td>
 
-                                  <td className="px-5 py-4 font-medium text-slate-300">
+                                  <td className="px-4 py-4 font-medium text-slate-300">
                                     {invoice.apartment.owner.name}
                                   </td>
 
-                                  <td className="px-5 py-4">
+                                  <td className="px-4 py-4">
                                     <span className="font-semibold tabular-nums text-slate-200">
                                       {moneyFormatter.format(
                                         Number(invoice.totalAmount.toString()),
@@ -761,7 +516,7 @@ export default async function AdminMaintenancePage({
                                     </span>
                                   </td>
 
-                                  <td className="px-5 py-4">
+                                  <td className="px-4 py-4">
                                     <span
                                       className={`inline-flex rounded-lg border px-2.5 py-1 text-xs font-medium ${
                                         invoiceStatusStyles[invoice.status]
@@ -771,17 +526,17 @@ export default async function AdminMaintenancePage({
                                     </span>
                                   </td>
 
-                                  <td className="px-5 py-4">
+                                  <td className="px-4 py-4">
                                     <details className="group">
                                       <summary className="flex w-fit cursor-pointer list-none items-center gap-2 rounded-lg border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs font-medium text-slate-400 transition hover:border-violet-400/15 hover:bg-violet-500/[0.05] hover:text-violet-300">
-                                        {invoice.items.length} poziții
+                                        {invoice.items.length} utilități
                                         <ChevronDown
                                           size={14}
                                           className="transition-transform duration-200 group-open:rotate-180"
                                         />
                                       </summary>
 
-                                      <div className="mt-4 w-[560px] max-w-[calc(100vw-6rem)]">
+                                      <div className="mt-4 -ml-[100px] w-[calc(100vw-6rem)] sm:-ml-[420px] sm:w-[560px] xl:-ml-[500px]">
                                         <InvoiceCalculationDetails
                                           items={invoice.items}
                                         />
