@@ -299,15 +299,15 @@ export default async function AdminExpensesPage({
                       </th>
 
                       <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                        Descriere
+                      </th>
+
+                      <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Suma
                       </th>
 
                       <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Impartire
-                      </th>
-
-                      <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
-                        Descriere
                       </th>
                     </tr>
                   </thead>
@@ -343,6 +343,12 @@ export default async function AdminExpensesPage({
                           </span>
                         </td>
 
+                        <td className="max-w-[320px] px-6 py-4">
+                          <p className="truncate text-slate-400">
+                            {expense.description || "—"}
+                          </p>
+                        </td>
+
                         <td className="px-6 py-4">
                           <div>
                             <p className="font-semibold tabular-nums text-slate-200">
@@ -370,12 +376,6 @@ export default async function AdminExpensesPage({
                               ]
                             }
                           </span>
-                        </td>
-
-                        <td className="max-w-[320px] px-6 py-4">
-                          <p className="truncate text-slate-400">
-                            {expense.description || "—"}
-                          </p>
                         </td>
                       </tr>
                     ))}
