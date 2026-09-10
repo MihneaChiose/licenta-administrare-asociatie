@@ -203,11 +203,6 @@ export default async function MeterReadingsPage({
                   </h2>
                 </div>
               </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Selectează utilitatea și introdu valoarea curentă a contorului
-                pentru perioada aleasă.
-              </p>
             </div>
 
             <div className="relative p-6">
@@ -254,10 +249,6 @@ export default async function MeterReadingsPage({
                 <h2 className="mt-2 text-lg font-semibold text-slate-100">
                   Istoric indexuri
                 </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Indexurile transmise pentru apartamentul tău.
-                </p>
               </div>
 
               <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs text-slate-500">

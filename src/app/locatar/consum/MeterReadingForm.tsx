@@ -144,7 +144,7 @@ export function MeterReadingForm({
           htmlFor="readingValue"
           className="text-sm font-medium text-slate-300"
         >
-          Index curent
+          Index
         </label>
 
         <div className="relative mt-2">
@@ -161,7 +161,7 @@ export function MeterReadingForm({
             min="0"
             required
             placeholder={placeholder}
-            className="app-input py-3 pl-11 pr-4 font-medium tabular-nums"
+            className="app-input py-3 pl-11 pr-4 font-medium tabular-nums [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
           />
         </div>
       </div>
