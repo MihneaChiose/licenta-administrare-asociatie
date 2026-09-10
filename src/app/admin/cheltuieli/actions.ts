@@ -14,6 +14,44 @@ import {
   getUtilityTypeForExpenseCategory,
 } from "@/lib/expenses";
 
+const excludedCategoryLabels = new Set([
+  "lift",
+  "administrare",
+  "fond rulment",
+  "fond de rulment",
+]);
+
+function normalizeLabel(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
+
+function isExcludedCategory(category: ExpenseCategory) {
+  return excludedCategoryLabels.has(
+    normalizeLabel(EXPENSE_CATEGORY_LABELS[category]),
+  );
+}
+
+const totalAmountSchema = z.preprocess(
+  (value) => {
+    if (typeof value !== "string" || value.trim() === "") {
+      return undefined;
+    }
+
+    return value.trim().replace(",", ".");
+  },
+  z.coerce
+    .number()
+    .positive("Suma trebuie să fie pozitivă")
+    .refine(
+      (value) => Math.abs(value * 100 - Math.round(value * 100)) < 1e-9,
+      "Suma poate avea maximum 2 zecimale",
+    ),
+);
+
 const expenseSchema = z.object({
   month: z.coerce
     .number()
@@ -29,13 +67,12 @@ const expenseSchema = z.object({
 
   category: z.enum(ExpenseCategory),
 
-  description: z
-    .string()
-    .trim()
-    .min(2, "Descrierea este obligatorie")
-    .max(255, "Descrierea este prea lungă"),
+  description: z.preprocess(
+    (value) => (typeof value === "string" ? value.trim() : ""),
+    z.string().max(255, "Descrierea este prea lungă"),
+  ),
 
-  totalAmount: z.coerce.number().positive("Suma trebuie să fie pozitivă"),
+  totalAmount: totalAmountSchema,
 
   distributionMethod: z.enum(ExpenseDistributionMethod),
 });
@@ -64,6 +101,38 @@ export async function createExpenseAction(formData: FormData) {
     const message = parsed.error.issues[0]?.message ?? "Date invalide";
 
     redirect(`/admin/cheltuieli?error=${encodeURIComponent(message)}`);
+  }
+
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+
+  const isFuturePeriod =
+    parsed.data.year > currentYear ||
+    (parsed.data.year === currentYear && parsed.data.month > currentMonth);
+
+  if (isFuturePeriod) {
+    redirect(
+      `/admin/cheltuieli?error=${encodeURIComponent(
+        "Cheltuielile nu pot fi introduse pentru perioade viitoare.",
+      )}`,
+    );
+  }
+
+  if (isExcludedCategory(parsed.data.category)) {
+    redirect(
+      `/admin/cheltuieli?error=${encodeURIComponent(
+        "Categoria selectată nu este disponibilă pentru cheltuieli noi.",
+      )}`,
+    );
+  }
+
+  if (parsed.data.distributionMethod === ExpenseDistributionMethod.CUSTOM) {
+    redirect(
+      `/admin/cheltuieli?error=${encodeURIComponent(
+        'Metoda de împărțire "Custom" nu este disponibilă.',
+      )}`,
+    );
   }
 
   if (
