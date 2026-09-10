@@ -1,9 +1,7 @@
 import {
   Building2,
-  CircleGauge,
   ClipboardList,
   Droplets,
-  Megaphone,
   ReceiptText,
   TriangleAlert,
   UsersRound,
@@ -13,7 +11,6 @@ import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { TenantLayout } from "@/components/layout/TenantLayout";
 import { StatisticsCard } from "@/components/dashboard/StatisticsCard";
-import { DashboardActionCard } from "@/components/dashboard/DashboardActionCard";
 import { getSession } from "@/lib/session";
 import { getTenantDashboardStatistics } from "@/lib/dashboard/tenant-statistics";
 
@@ -33,7 +30,7 @@ export default async function TenantDashboardPage() {
   if (!statistics) {
     return (
       <TenantLayout
-        title="Dashboard locatar"
+        title="Dashboard"
         description={`Bine ai venit, ${session.name}.`}
       >
         <div className="app-card relative overflow-hidden p-6 sm:p-8">
@@ -61,12 +58,12 @@ export default async function TenantDashboardPage() {
 
   return (
     <TenantLayout
-      title="Dashboard locatar"
+      title="Dashboard"
       description={`Bine ai venit, ${session.name}. Ai aici situatia curenta a apartamentului tau.`}
     >
       <div className="space-y-10">
         <section>
-          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-5">
             <div>
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.7)]" />
@@ -80,10 +77,6 @@ export default async function TenantDashboardPage() {
                 Situatie curenta
               </h2>
             </div>
-
-            <p className="text-sm text-slate-500">
-              Informatii actualizate despre apartament
-            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -137,56 +130,6 @@ export default async function TenantDashboardPage() {
               description="Sesizari deschise sau aflate in lucru"
               icon={ClipboardList}
               accent={statistics.activeTickets > 0 ? "amber" : "emerald"}
-            />
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-5">
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.65)]" />
-
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
-                Navigare rapida
-              </p>
-            </div>
-
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
-              Acces rapid
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Cele mai utilizate functionalitati ale contului tau.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <DashboardActionCard
-              href="/locatar/consum"
-              title="Indexuri contoare"
-              description="Transmite indexurile contoarelor pentru luna curenta."
-              icon={CircleGauge}
-            />
-
-            <DashboardActionCard
-              href="/locatar/intretinere"
-              title="Intretinere si plati"
-              description="Consulta intretinerea si gestioneaza platile."
-              icon={WalletCards}
-            />
-
-            <DashboardActionCard
-              href="/locatar/sesizari"
-              title="Sesizari"
-              description="Trimite o sesizare si urmareste starea acesteia."
-              icon={ClipboardList}
-            />
-
-            <DashboardActionCard
-              href="/locatar/avizier"
-              title="Avizier virtual"
-              description="Consulta anunturile publicate de administrator."
-              icon={Megaphone}
             />
           </div>
         </section>

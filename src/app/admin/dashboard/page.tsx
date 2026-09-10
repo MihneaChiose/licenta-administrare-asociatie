@@ -1,14 +1,9 @@
 import {
   BellRing,
   Building2,
-  Calculator,
-  ClipboardList,
   CreditCard,
-  Gauge,
-  Megaphone,
   ReceiptText,
   TriangleAlert,
-  UserRound,
   UsersRound,
   WalletCards,
 } from "lucide-react";
@@ -16,7 +11,6 @@ import { redirect } from "next/navigation";
 import { UserRole } from "@/generated/prisma/client";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { StatisticsCard } from "@/components/dashboard/StatisticsCard";
-import { DashboardActionCard } from "@/components/dashboard/DashboardActionCard";
 import { getSession } from "@/lib/session";
 import { getAdminDashboardStatistics } from "@/lib/dashboard/admin-statistics";
 
@@ -36,7 +30,7 @@ export default async function AdminDashboardPage() {
   if (!statistics) {
     return (
       <AdminLayout
-        title="Dashboard administrator"
+        title="Dashboard"
         description={`Bine ai venit, ${session.name}.`}
       >
         <div className="app-card relative overflow-hidden p-6 sm:p-8">
@@ -65,12 +59,12 @@ export default async function AdminDashboardPage() {
 
   return (
     <AdminLayout
-      title="Dashboard administrator"
+      title="Dashboard"
       description={`Bine ai venit, ${session.name}. Ai aici o imagine de ansamblu asupra activitatii asociatiei.`}
     >
       <div className="space-y-10">
         <section>
-          <div className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
+          <div className="mb-5">
             <div>
               <div className="flex items-center gap-2">
                 <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.7)]" />
@@ -84,10 +78,6 @@ export default async function AdminDashboardPage() {
                 Situatie generala
               </h2>
             </div>
-
-            <p className="text-sm text-slate-500">
-              Indicatorii principali ai asociatiei
-            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
@@ -137,77 +127,6 @@ export default async function AdminDashboardPage() {
               description="Sesizari deschise sau aflate in lucru"
               icon={BellRing}
               accent={statistics.openTickets > 0 ? "amber" : "emerald"}
-            />
-          </div>
-        </section>
-
-        <section>
-          <div className="mb-5">
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-cyan-300 shadow-[0_0_10px_rgba(103,232,249,0.65)]" />
-
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
-                Management
-              </p>
-            </div>
-
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
-              Acces rapid
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Acceseaza direct principalele zone de administrare.
-            </p>
-          </div>
-
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-            <DashboardActionCard
-              href="/admin/apartamente"
-              title="Apartamente"
-              description="Gestionare apartamente si datele locatarilor."
-              icon={UserRound}
-            />
-
-            <DashboardActionCard
-              href="/admin/consumuri"
-              title="Indexuri contoare"
-              description="Vizualizeaza indexurile transmise de locatari."
-              icon={Gauge}
-            />
-
-            <DashboardActionCard
-              href="/admin/cheltuieli"
-              title="Cheltuieli"
-              description="Introdu si gestioneaza cheltuielile asociatiei."
-              icon={ReceiptText}
-            />
-
-            <DashboardActionCard
-              href="/admin/intretinere"
-              title="Intretinere"
-              description="Genereaza si gestioneaza listele lunare de plata."
-              icon={Calculator}
-            />
-
-            <DashboardActionCard
-              href="/admin/plati"
-              title="Plati"
-              description="Verifica si confirma platile transmise."
-              icon={CreditCard}
-            />
-
-            <DashboardActionCard
-              href="/admin/sesizari"
-              title="Sesizari"
-              description="Monitorizeaza solicitarile transmise de locatari."
-              icon={ClipboardList}
-            />
-
-            <DashboardActionCard
-              href="/admin/avizier"
-              title="Avizier"
-              description="Publica si administreaza anunturile locatarilor."
-              icon={Megaphone}
             />
           </div>
         </section>
