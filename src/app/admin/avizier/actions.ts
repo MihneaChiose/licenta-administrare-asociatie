@@ -8,39 +8,37 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 
 const createAnnouncementSchema = z.object({
-  associationId: z.string().min(1, "Asociatia este obligatorie"),
-
   title: z
     .string()
     .trim()
-    .min(3, "Titlul trebuie sa aiba cel putin 3 caractere")
+    .min(3, "Titlul trebuie să aibă cel puțin 3 caractere")
     .max(100, "Titlul este prea lung"),
 
   content: z
     .string()
     .trim()
-    .min(10, "Continutul trebuie sa aiba cel putin 10 caractere")
-    .max(2000, "Continutul este prea lung"),
+    .min(10, "Conținutul trebuie să aibă cel puțin 10 caractere")
+    .max(2000, "Conținutul este prea lung"),
 });
 
 const editAnnouncementSchema = z.object({
-  announcementId: z.string().min(1, "Anunt invalid"),
+  announcementId: z.string().min(1, "Anunț invalid"),
 
   title: z
     .string()
     .trim()
-    .min(3, "Titlul trebuie sa aiba cel putin 3 caractere")
+    .min(3, "Titlul trebuie să aibă cel puțin 3 caractere")
     .max(100, "Titlul este prea lung"),
 
   content: z
     .string()
     .trim()
-    .min(10, "Continutul trebuie sa aiba cel putin 10 caractere")
-    .max(2000, "Continutul este prea lung"),
+    .min(10, "Conținutul trebuie să aibă cel puțin 10 caractere")
+    .max(2000, "Conținutul este prea lung"),
 });
 
 const withdrawAnnouncementSchema = z.object({
-  announcementId: z.string().min(1, "Anunt invalid"),
+  announcementId: z.string().min(1, "Anunț invalid"),
 });
 
 export async function createAnnouncementAction(formData: FormData) {
@@ -55,7 +53,6 @@ export async function createAnnouncementAction(formData: FormData) {
   }
 
   const parsed = createAnnouncementSchema.safeParse({
-    associationId: formData.get("associationId"),
     title: formData.get("title"),
     content: formData.get("content"),
   });
@@ -69,9 +66,9 @@ export async function createAnnouncementAction(formData: FormData) {
 
   const association = await prisma.association.findFirst({
     where: {
-      id: parsed.data.associationId,
       adminId: session.id,
     },
+
     select: {
       id: true,
     },
@@ -80,8 +77,7 @@ export async function createAnnouncementAction(formData: FormData) {
   if (!association) {
     return {
       success: false,
-      message:
-        "Asociatia selectata nu exista sau nu este administrata de acest cont.",
+      message: "Nu există nicio asociație administrată de acest cont.",
     };
   }
 
@@ -98,7 +94,7 @@ export async function createAnnouncementAction(formData: FormData) {
 
   return {
     success: true,
-    message: "Anuntul a fost publicat cu succes.",
+    message: "Anunțul a fost publicat cu succes.",
   };
 }
 
@@ -129,10 +125,12 @@ export async function editAnnouncementAction(formData: FormData) {
   const announcement = await prisma.announcement.findFirst({
     where: {
       id: parsed.data.announcementId,
+
       association: {
         adminId: session.id,
       },
     },
+
     select: {
       id: true,
       withdrawnAt: true,
@@ -143,14 +141,14 @@ export async function editAnnouncementAction(formData: FormData) {
     return {
       success: false,
       message:
-        "Anuntul nu exista sau nu apartine unei asociatii administrate de acest cont.",
+        "Anunțul nu există sau nu aparține unei asociații administrate de acest cont.",
     };
   }
 
   if (announcement.withdrawnAt) {
     return {
       success: false,
-      message: "Un anunt retras nu mai poate fi modificat.",
+      message: "Un anunț retras nu mai poate fi modificat.",
     };
   }
 
@@ -158,6 +156,7 @@ export async function editAnnouncementAction(formData: FormData) {
     where: {
       id: announcement.id,
     },
+
     data: {
       title: parsed.data.title,
       content: parsed.data.content,
@@ -169,7 +168,7 @@ export async function editAnnouncementAction(formData: FormData) {
 
   return {
     success: true,
-    message: "Anuntul a fost actualizat cu succes.",
+    message: "Anunțul a fost actualizat cu succes.",
   };
 }
 
@@ -198,10 +197,12 @@ export async function withdrawAnnouncementAction(formData: FormData) {
   const announcement = await prisma.announcement.findFirst({
     where: {
       id: parsed.data.announcementId,
+
       association: {
         adminId: session.id,
       },
     },
+
     select: {
       id: true,
       withdrawnAt: true,
@@ -212,14 +213,14 @@ export async function withdrawAnnouncementAction(formData: FormData) {
     return {
       success: false,
       message:
-        "Anuntul nu exista sau nu apartine unei asociatii administrate de acest cont.",
+        "Anunțul nu există sau nu aparține unei asociații administrate de acest cont.",
     };
   }
 
   if (announcement.withdrawnAt) {
     return {
       success: false,
-      message: "Anuntul este deja retras.",
+      message: "Anunțul este deja retras.",
     };
   }
 
@@ -227,6 +228,7 @@ export async function withdrawAnnouncementAction(formData: FormData) {
     where: {
       id: announcement.id,
     },
+
     data: {
       withdrawnAt: new Date(),
     },
@@ -237,6 +239,6 @@ export async function withdrawAnnouncementAction(formData: FormData) {
 
   return {
     success: true,
-    message: "Anuntul a fost retras cu succes.",
+    message: "Anunțul a fost retras cu succes.",
   };
 }
