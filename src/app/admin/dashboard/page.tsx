@@ -58,10 +58,7 @@ export default async function AdminDashboardPage() {
   }
 
   return (
-    <AdminLayout
-      title="Dashboard"
-      description={`Bine ai venit, ${session.name}. Ai aici o imagine de ansamblu asupra activitatii asociatiei.`}
-    >
+    <AdminLayout title="Dashboard">
       <div className="space-y-10">
         <section>
           <div className="mb-5">

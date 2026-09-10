@@ -47,7 +47,7 @@ export default async function AdminApartmentsPage() {
   );
 
   return (
-    <AdminLayout>
+    <AdminLayout title="Apartamente si locatari">
       <div className="mx-auto max-w-7xl space-y-10 pt-2">
         <section>
           <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">

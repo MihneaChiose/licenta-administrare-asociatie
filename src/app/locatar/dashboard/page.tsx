@@ -57,10 +57,7 @@ export default async function TenantDashboardPage() {
   }
 
   return (
-    <TenantLayout
-      title="Dashboard"
-      description={`Bine ai venit, ${session.name}. Ai aici situatia curenta a apartamentului tau.`}
-    >
+    <TenantLayout title="Dashboard">
       <div className="space-y-10">
         <section>
           <div className="mb-5">
