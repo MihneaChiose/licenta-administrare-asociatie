@@ -15,7 +15,7 @@ import { TenantLayout } from "@/components/layout/TenantLayout";
 import { METER_UTILITY_CONFIG } from "@/lib/meters";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { submitMeterReadingsAction } from "./actions";
+import { submitMeterReadingAction } from "./actions";
 
 type MeterReadingsPageProps = {
   searchParams: Promise<{
@@ -325,14 +325,14 @@ export default async function MeterReadingsPage({
                   </p>
 
                   <h2 className="mt-1 text-lg font-semibold text-slate-100">
-                    Indexuri contoare
+                    Transmitere index
                   </h2>
                 </div>
               </div>
 
               <p className="mt-3 text-sm leading-6 text-slate-500">
-                Introdu valoarea curentă afișată de fiecare contor pentru
-                perioada selectată.
+                Selectează utilitatea și introdu valoarea curentă a contorului
+                pentru perioada aleasă.
               </p>
             </div>
 
@@ -353,7 +353,7 @@ export default async function MeterReadingsPage({
                 </div>
               )}
 
-              <form action={submitMeterReadingsAction} className="space-y-6">
+              <form action={submitMeterReadingAction} className="space-y-6">
                 <div>
                   <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
                     Perioadă
@@ -403,59 +403,71 @@ export default async function MeterReadingsPage({
                 </div>
 
                 <div>
-                  <div className="mb-3 flex items-center justify-between gap-4">
-                    <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                      Valorile contoarelor
-                    </p>
+                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
+                    Citire contor
+                  </p>
 
-                    <span className="text-xs text-slate-600">
-                      {METER_UTILITY_CONFIG.length} utilități
-                    </span>
-                  </div>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    {METER_UTILITY_CONFIG.map((utility) => (
-                      <div
-                        key={utility.utilityType}
-                        className="rounded-2xl border border-white/[0.055] bg-white/[0.018] p-4"
+                  <div className="space-y-4">
+                    <div>
+                      <label
+                        htmlFor="utilityType"
+                        className="text-sm font-medium text-slate-300"
                       >
-                        <div className="mb-3 flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-2">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-cyan-400/[0.07] text-cyan-300 ring-1 ring-cyan-400/10">
-                              <Droplets size={14} />
-                            </div>
+                        Utilitate
+                      </label>
 
-                            <label
-                              htmlFor={utility.fieldName}
-                              className="text-sm font-medium text-slate-300"
-                            >
-                              {utility.label}
-                            </label>
-                          </div>
+                      <select
+                        id="utilityType"
+                        name="utilityType"
+                        required
+                        defaultValue=""
+                        className="app-input mt-2 px-3 py-3"
+                      >
+                        <option value="" disabled>
+                          Selectează utilitatea
+                        </option>
 
-                          <span className="rounded-lg border border-white/[0.05] bg-white/[0.025] px-2 py-1 text-[10px] font-medium text-slate-600">
-                            {utility.unit}
-                          </span>
-                        </div>
+                        {METER_UTILITY_CONFIG.map((utility) => (
+                          <option
+                            key={utility.utilityType}
+                            value={utility.utilityType}
+                          >
+                            {utility.label} ({utility.unit})
+                          </option>
+                        ))}
+                      </select>
+                    </div>
 
-                        <div className="relative">
-                          <input
-                            id={utility.fieldName}
-                            name={utility.fieldName}
-                            type="number"
-                            step="0.001"
-                            min="0"
-                            required
-                            placeholder="0.000"
-                            className="app-input pr-14 font-medium tabular-nums"
-                          />
+                    <div>
+                      <label
+                        htmlFor="readingValue"
+                        className="text-sm font-medium text-slate-300"
+                      >
+                        Index curent
+                      </label>
 
-                          <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs text-slate-600">
-                            {utility.unit}
-                          </span>
-                        </div>
+                      <div className="relative mt-2">
+                        <Droplets
+                          size={17}
+                          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600"
+                        />
+
+                        <input
+                          id="readingValue"
+                          name="readingValue"
+                          type="number"
+                          step="0.001"
+                          min="0"
+                          required
+                          placeholder="0.000"
+                          className="app-input py-3 pl-11 pr-4 font-medium tabular-nums"
+                        />
                       </div>
-                    ))}
+
+                      <p className="mt-2 text-xs leading-5 text-slate-600">
+                        Introdu valoarea curentă afișată de contorul selectat.
+                      </p>
+                    </div>
                   </div>
                 </div>
 
@@ -463,9 +475,10 @@ export default async function MeterReadingsPage({
                   <Info size={16} className="mt-0.5 shrink-0 text-blue-300" />
 
                   <p className="text-xs leading-5 text-slate-500">
-                    Pentru aceeași perioadă indexurile pot fi transmise o
-                    singură dată. Sistemul verifică automat și continuitatea
-                    față de perioadele precedente și următoare existente.
+                    Pentru aceeași perioadă, indexul fiecărei utilități poate fi
+                    transmis o singură dată. Sistemul verifică automat
+                    continuitatea față de perioadele precedente și următoare
+                    existente.
                   </p>
                 </div>
 

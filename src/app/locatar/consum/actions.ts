@@ -22,7 +22,7 @@ const readingValueSchema = z.preprocess(
   z.coerce.number().min(0, "Indexul nu poate fi negativ"),
 );
 
-const meterReadingsSchema = z.object({
+const meterReadingSchema = z.object({
   month: z.coerce
     .number()
     .int("Luna trebuie să fie număr întreg")
@@ -35,14 +35,12 @@ const meterReadingsSchema = z.object({
     .min(2024, "Anul este prea mic")
     .max(2100, "Anul este prea mare"),
 
-  coldWater: readingValueSchema,
-  hotWater: readingValueSchema,
-  gas: readingValueSchema,
-  electricity: readingValueSchema,
-  heating: readingValueSchema,
+  utilityType: z.string().min(1, "Utilitatea este obligatorie"),
+
+  readingValue: readingValueSchema,
 });
 
-export async function submitMeterReadingsAction(formData: FormData) {
+export async function submitMeterReadingAction(formData: FormData) {
   const session = await getSession();
 
   if (!session) {
@@ -53,14 +51,11 @@ export async function submitMeterReadingsAction(formData: FormData) {
     redirect("/admin/dashboard");
   }
 
-  const parsed = meterReadingsSchema.safeParse({
+  const parsed = meterReadingSchema.safeParse({
     month: formData.get("month"),
     year: formData.get("year"),
-    coldWater: formData.get("coldWater"),
-    hotWater: formData.get("hotWater"),
-    gas: formData.get("gas"),
-    electricity: formData.get("electricity"),
-    heating: formData.get("heating"),
+    utilityType: formData.get("utilityType"),
+    readingValue: formData.get("readingValue"),
   });
 
   if (!parsed.success) {
@@ -69,10 +64,23 @@ export async function submitMeterReadingsAction(formData: FormData) {
     redirect(`/locatar/consum?error=${encodeURIComponent(message)}`);
   }
 
+  const utility = METER_UTILITY_CONFIG.find(
+    (config) => config.utilityType === parsed.data.utilityType,
+  );
+
+  if (!utility) {
+    redirect(
+      `/locatar/consum?error=${encodeURIComponent(
+        "Utilitatea selectată nu este validă.",
+      )}`,
+    );
+  }
+
   const apartment = await prisma.apartment.findFirst({
     where: {
       ownerId: session.id,
     },
+
     include: {
       meters: {
         select: {
@@ -91,40 +99,34 @@ export async function submitMeterReadingsAction(formData: FormData) {
     );
   }
 
-  const meterByUtilityType = new Map(
-    apartment.meters.map((meter) => [meter.utilityType, meter]),
+  const meter = apartment.meters.find(
+    (apartmentMeter) => apartmentMeter.utilityType === utility.utilityType,
   );
 
-  const missingMeters = METER_UTILITY_CONFIG.filter(
-    (utility) => !meterByUtilityType.has(utility.utilityType),
-  );
-
-  if (missingMeters.length > 0) {
-    const missingLabels = missingMeters
-      .map((utility) => utility.label)
-      .join(", ");
-
+  if (!meter) {
     redirect(
       `/locatar/consum?error=${encodeURIComponent(
-        `Apartamentul nu are toate contoarele configurate. Lipsesc: ${missingLabels}.`,
+        `Contorul pentru ${utility.label} nu este configurat pentru acest apartament.`,
       )}`,
     );
   }
 
-  const existingReadings = await prisma.meterReading.count({
+  const existingReading = await prisma.meterReading.findFirst({
     where: {
+      meterId: meter.id,
       month: parsed.data.month,
       year: parsed.data.year,
-      meter: {
-        apartmentId: apartment.id,
-      },
+    },
+
+    select: {
+      id: true,
     },
   });
 
-  if (existingReadings > 0) {
+  if (existingReading) {
     redirect(
       `/locatar/consum?error=${encodeURIComponent(
-        "Indexurile pentru această lună au fost deja transmise.",
+        `Indexul pentru ${utility.label} a fost deja transmis pentru perioada selectată.`,
       )}`,
     );
   }
@@ -133,74 +135,50 @@ export async function submitMeterReadingsAction(formData: FormData) {
 
   const nextPeriod = getNextPeriod(parsed.data.month, parsed.data.year);
 
-  const meterIds = apartment.meters.map((meter) => meter.id);
-
-  const [previousReadings, nextReadings] = await Promise.all([
-    prisma.meterReading.findMany({
+  const [previousReading, nextReading] = await Promise.all([
+    prisma.meterReading.findFirst({
       where: {
-        meterId: {
-          in: meterIds,
-        },
+        meterId: meter.id,
         month: previousPeriod.month,
         year: previousPeriod.year,
       },
+
       select: {
-        meterId: true,
         readingValue: true,
       },
     }),
 
-    prisma.meterReading.findMany({
+    prisma.meterReading.findFirst({
       where: {
-        meterId: {
-          in: meterIds,
-        },
+        meterId: meter.id,
         month: nextPeriod.month,
         year: nextPeriod.year,
       },
+
       select: {
-        meterId: true,
         readingValue: true,
       },
     }),
   ]);
 
-  const previousReadingByMeterId = new Map(
-    previousReadings.map((reading) => [
-      reading.meterId,
-      Number(reading.readingValue.toString()),
-    ]),
-  );
+  const currentValue = parsed.data.readingValue;
 
-  const nextReadingByMeterId = new Map(
-    nextReadings.map((reading) => [
-      reading.meterId,
-      Number(reading.readingValue.toString()),
-    ]),
-  );
+  if (previousReading) {
+    const previousValue = Number(previousReading.readingValue.toString());
 
-  for (const utility of METER_UTILITY_CONFIG) {
-    const meter = meterByUtilityType.get(utility.utilityType);
-
-    if (!meter) {
-      continue;
-    }
-
-    const currentValue = parsed.data[utility.fieldName];
-
-    const previousValue = previousReadingByMeterId.get(meter.id);
-
-    if (previousValue !== undefined && currentValue < previousValue) {
+    if (currentValue < previousValue) {
       redirect(
         `/locatar/consum?error=${encodeURIComponent(
           `${utility.label}: indexul curent (${currentValue}) nu poate fi mai mic decât indexul lunii precedente (${previousValue}).`,
         )}`,
       );
     }
+  }
 
-    const nextValue = nextReadingByMeterId.get(meter.id);
+  if (nextReading) {
+    const nextValue = Number(nextReading.readingValue.toString());
 
-    if (nextValue !== undefined && currentValue > nextValue) {
+    if (currentValue > nextValue) {
       redirect(
         `/locatar/consum?error=${encodeURIComponent(
           `${utility.label}: indexul introdus (${currentValue}) nu poate fi mai mare decât indexul lunii următoare deja transmis (${nextValue}).`,
@@ -209,30 +187,18 @@ export async function submitMeterReadingsAction(formData: FormData) {
     }
   }
 
-  const readingsToCreate = METER_UTILITY_CONFIG.map((utility) => {
-    const meter = meterByUtilityType.get(utility.utilityType);
-
-    if (!meter) {
-      throw new Error(
-        `Contorul ${utility.utilityType} nu a fost găsit pentru apartament.`,
-      );
-    }
-
-    return {
+  await prisma.meterReading.create({
+    data: {
       meterId: meter.id,
       month: parsed.data.month,
       year: parsed.data.year,
-      readingValue: parsed.data[utility.fieldName].toFixed(3),
-    };
-  });
-
-  await prisma.meterReading.createMany({
-    data: readingsToCreate,
+      readingValue: currentValue.toFixed(3),
+    },
   });
 
   redirect(
     `/locatar/consum?success=${encodeURIComponent(
-      "Indexurile au fost transmise cu succes.",
+      `Indexul pentru ${utility.label} a fost transmis cu succes.`,
     )}`,
   );
 }
