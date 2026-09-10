@@ -8,7 +8,7 @@ import { getSession } from "@/lib/session";
 import {
   getNextPeriod,
   getPreviousPeriod,
-  METER_UTILITY_CONFIG,
+  TENANT_METER_UTILITY_CONFIG,
 } from "@/lib/meters";
 
 const readingValueSchema = z.preprocess(
@@ -40,6 +40,12 @@ const meterReadingSchema = z.object({
   readingValue: readingValueSchema,
 });
 
+function hasMaximumDecimals(value: number, decimals: number) {
+  const factor = 10 ** decimals;
+
+  return Math.abs(value * factor - Math.round(value * factor)) < 1e-9;
+}
+
 export async function submitMeterReadingAction(formData: FormData) {
   const session = await getSession();
 
@@ -64,7 +70,23 @@ export async function submitMeterReadingAction(formData: FormData) {
     redirect(`/locatar/consum?error=${encodeURIComponent(message)}`);
   }
 
-  const utility = METER_UTILITY_CONFIG.find(
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+
+  const isFuturePeriod =
+    parsed.data.year > currentYear ||
+    (parsed.data.year === currentYear && parsed.data.month > currentMonth);
+
+  if (isFuturePeriod) {
+    redirect(
+      `/locatar/consum?error=${encodeURIComponent(
+        "Indexurile nu pot fi transmise pentru perioade viitoare.",
+      )}`,
+    );
+  }
+
+  const utility = TENANT_METER_UTILITY_CONFIG.find(
     (config) => config.utilityType === parsed.data.utilityType,
   );
 
@@ -72,6 +94,14 @@ export async function submitMeterReadingAction(formData: FormData) {
     redirect(
       `/locatar/consum?error=${encodeURIComponent(
         "Utilitatea selectată nu este validă.",
+      )}`,
+    );
+  }
+
+  if (!hasMaximumDecimals(parsed.data.readingValue, utility.decimals)) {
+    redirect(
+      `/locatar/consum?error=${encodeURIComponent(
+        `${utility.label}: indexul poate avea maximum ${utility.decimals} zecimale.`,
       )}`,
     );
   }
@@ -192,7 +222,7 @@ export async function submitMeterReadingAction(formData: FormData) {
       meterId: meter.id,
       month: parsed.data.month,
       year: parsed.data.year,
-      readingValue: currentValue.toFixed(3),
+      readingValue: currentValue.toFixed(utility.decimals),
     },
   });
 

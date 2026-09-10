@@ -1,21 +1,17 @@
 import {
-  Building2,
   CalendarDays,
   CheckCircle2,
   Clock3,
-  Droplets,
   Gauge,
-  Info,
-  Send,
   TriangleAlert,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import { UtilityType, UserRole } from "@/generated/prisma/client";
 import { TenantLayout } from "@/components/layout/TenantLayout";
-import { METER_UTILITY_CONFIG } from "@/lib/meters";
+import { TENANT_METER_UTILITY_CONFIG } from "@/lib/meters";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { submitMeterReadingAction } from "./actions";
+import { MeterReadingForm } from "./MeterReadingForm";
 
 type MeterReadingsPageProps = {
   searchParams: Promise<{
@@ -65,18 +61,11 @@ export default async function MeterReadingsPage({
     where: {
       ownerId: session.id,
     },
-
-    include: {
-      association: true,
-    },
   });
 
   if (!apartment) {
     return (
-      <TenantLayout
-        title="Informații indisponibile"
-        description="Contul tău nu este asociat momentan unui apartament."
-      >
+      <TenantLayout title="Informații indisponibile">
         <div className="mx-auto max-w-4xl">
           <div className="app-card relative overflow-hidden p-8">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-400/[0.05] blur-3xl" />
@@ -103,10 +92,18 @@ export default async function MeterReadingsPage({
     );
   }
 
+  const tenantUtilityTypes = TENANT_METER_UTILITY_CONFIG.map(
+    (utility) => utility.utilityType,
+  );
+
   const meterReadings = await prisma.meterReading.findMany({
     where: {
       meter: {
         apartmentId: apartment.id,
+
+        utilityType: {
+          in: tenantUtilityTypes,
+        },
       },
     },
 
@@ -139,6 +136,14 @@ export default async function MeterReadingsPage({
   const historyMap = new Map<string, ReadingHistoryRow>();
 
   for (const reading of meterReadings) {
+    const utility = TENANT_METER_UTILITY_CONFIG.find(
+      (config) => config.utilityType === reading.meter.utilityType,
+    );
+
+    if (!utility) {
+      continue;
+    }
+
     const key = `${reading.year}-${reading.month}`;
 
     let historyRow = historyMap.get(key);
@@ -154,8 +159,9 @@ export default async function MeterReadingsPage({
       historyMap.set(key, historyRow);
     }
 
-    historyRow.values[reading.meter.utilityType] =
-      reading.readingValue.toFixed(3);
+    historyRow.values[reading.meter.utilityType] = reading.readingValue.toFixed(
+      utility.decimals,
+    );
 
     if (reading.submittedAt > historyRow.submittedAt) {
       historyRow.submittedAt = reading.submittedAt;
@@ -174,141 +180,9 @@ export default async function MeterReadingsPage({
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
-  const latestReading = readingHistory[0];
-
-  const latestPeriod = latestReading
-    ? `${monthNames[latestReading.month]} ${latestReading.year}`
-    : "-";
-
-  const latestSubmission = latestReading
-    ? latestReading.submittedAt.toLocaleDateString("ro-RO")
-    : "-";
-
   return (
-    <TenantLayout
-      title="Transmitere indexuri"
-      description={`Apartamentul ${apartment.number} - ${apartment.association.name}`}
-    >
-      <div className="mx-auto max-w-7xl space-y-8">
-        <section>
-          <div className="mb-5">
-            <div className="flex items-center gap-2">
-              <span className="h-1.5 w-1.5 rounded-full bg-violet-400 shadow-[0_0_10px_rgba(167,139,250,0.7)]" />
-
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-400">
-                My consumption
-              </p>
-            </div>
-
-            <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
-              Situație contoare
-            </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Transmite indexurile lunare și consultă istoricul înregistrărilor
-              apartamentului tău.
-            </p>
-          </div>
-
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Apartament
-                  </p>
-
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-50">
-                    Ap. {apartment.number}
-                  </p>
-
-                  <p className="mt-2 truncate text-xs text-slate-500">
-                    {apartment.association.name}
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/10">
-                  <Building2 size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-400/[0.07] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Perioada curentă
-                  </p>
-
-                  <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-slate-50">
-                    {monthNames[currentMonth]} {currentYear}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Perioada implicită de transmitere
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/10">
-                  <CalendarDays size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-400/[0.07] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Ultima perioadă
-                  </p>
-
-                  <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-slate-50">
-                    {latestPeriod}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Ultimele indexuri existente
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-blue-400/10 text-blue-300 ring-1 ring-blue-400/10">
-                  <Gauge size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-400/[0.06] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Ultima transmitere
-                  </p>
-
-                  <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-slate-50">
-                    {latestSubmission}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    {readingHistory.length} perioade în istoric
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
-                  <Clock3 size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-          </div>
-        </section>
-
+    <TenantLayout title="Transmitere indexuri">
+      <div className="mx-auto max-w-7xl pt-2">
         <div className="grid gap-6 xl:grid-cols-[0.9fr_1.45fr]">
           <section className="app-card relative h-fit overflow-hidden">
             <div className="pointer-events-none absolute -left-20 -top-20 h-56 w-56 rounded-full bg-violet-500/[0.055] blur-3xl" />
@@ -353,143 +227,16 @@ export default async function MeterReadingsPage({
                 </div>
               )}
 
-              <form action={submitMeterReadingAction} className="space-y-6">
-                <div>
-                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                    Perioadă
-                  </p>
-
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label
-                        htmlFor="month"
-                        className="text-sm font-medium text-slate-300"
-                      >
-                        Luna
-                      </label>
-
-                      <select
-                        id="month"
-                        name="month"
-                        defaultValue={currentMonth}
-                        className="app-input mt-2 px-3 py-3"
-                      >
-                        {Object.entries(monthNames).map(([value, label]) => (
-                          <option key={value} value={value}>
-                            {label}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="year"
-                        className="text-sm font-medium text-slate-300"
-                      >
-                        An
-                      </label>
-
-                      <input
-                        id="year"
-                        name="year"
-                        type="number"
-                        defaultValue={currentYear}
-                        required
-                        className="app-input mt-2 px-3 py-3"
-                      />
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.14em] text-slate-600">
-                    Citire contor
-                  </p>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label
-                        htmlFor="utilityType"
-                        className="text-sm font-medium text-slate-300"
-                      >
-                        Utilitate
-                      </label>
-
-                      <select
-                        id="utilityType"
-                        name="utilityType"
-                        required
-                        defaultValue=""
-                        className="app-input mt-2 px-3 py-3"
-                      >
-                        <option value="" disabled>
-                          Selectează utilitatea
-                        </option>
-
-                        {METER_UTILITY_CONFIG.map((utility) => (
-                          <option
-                            key={utility.utilityType}
-                            value={utility.utilityType}
-                          >
-                            {utility.label} ({utility.unit})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-
-                    <div>
-                      <label
-                        htmlFor="readingValue"
-                        className="text-sm font-medium text-slate-300"
-                      >
-                        Index curent
-                      </label>
-
-                      <div className="relative mt-2">
-                        <Droplets
-                          size={17}
-                          className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600"
-                        />
-
-                        <input
-                          id="readingValue"
-                          name="readingValue"
-                          type="number"
-                          step="0.001"
-                          min="0"
-                          required
-                          placeholder="0.000"
-                          className="app-input py-3 pl-11 pr-4 font-medium tabular-nums"
-                        />
-                      </div>
-
-                      <p className="mt-2 text-xs leading-5 text-slate-600">
-                        Introdu valoarea curentă afișată de contorul selectat.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3 rounded-xl border border-blue-400/10 bg-blue-400/[0.035] p-3.5">
-                  <Info size={16} className="mt-0.5 shrink-0 text-blue-300" />
-
-                  <p className="text-xs leading-5 text-slate-500">
-                    Pentru aceeași perioadă, indexul fiecărei utilități poate fi
-                    transmis o singură dată. Sistemul verifică automat
-                    continuitatea față de perioadele precedente și următoare
-                    existente.
-                  </p>
-                </div>
-
-                <button
-                  type="submit"
-                  className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-medium"
-                >
-                  <Send size={17} />
-                  Trimite indexurile
-                </button>
-              </form>
+              <MeterReadingForm
+                currentMonth={currentMonth}
+                currentYear={currentYear}
+                utilities={TENANT_METER_UTILITY_CONFIG.map((utility) => ({
+                  utilityType: utility.utilityType,
+                  label: utility.label,
+                  unit: utility.unit,
+                  decimals: utility.decimals,
+                }))}
+              />
             </div>
           </section>
 
@@ -536,14 +283,14 @@ export default async function MeterReadingsPage({
               </div>
             ) : (
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[900px] text-left text-sm">
+                <table className="w-full min-w-[780px] text-left text-sm">
                   <thead>
                     <tr className="border-b border-white/[0.06] bg-white/[0.025]">
                       <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Perioada
                       </th>
 
-                      {METER_UTILITY_CONFIG.map((utility) => (
+                      {TENANT_METER_UTILITY_CONFIG.map((utility) => (
                         <th
                           key={utility.utilityType}
                           className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500"
@@ -559,20 +306,14 @@ export default async function MeterReadingsPage({
                   </thead>
 
                   <tbody className="divide-y divide-white/[0.055]">
-                    {readingHistory.map((row, index) => (
+                    {readingHistory.map((row) => (
                       <tr
                         key={`${row.year}-${row.month}`}
                         className="transition-colors duration-150 hover:bg-violet-500/[0.03]"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div
-                              className={`flex h-9 w-9 items-center justify-center rounded-xl ring-1 ${
-                                index === 0
-                                  ? "bg-violet-500/10 text-violet-300 ring-violet-400/10"
-                                  : "bg-white/[0.03] text-slate-500 ring-white/[0.05]"
-                              }`}
-                            >
+                            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/[0.03] text-slate-500 ring-1 ring-white/[0.05]">
                               <CalendarDays size={16} />
                             </div>
 
@@ -581,22 +322,14 @@ export default async function MeterReadingsPage({
                                 {monthNames[row.month]}
                               </p>
 
-                              <div className="mt-0.5 flex items-center gap-2">
-                                <span className="text-xs text-slate-500">
-                                  {row.year}
-                                </span>
-
-                                {index === 0 && (
-                                  <span className="rounded-md border border-violet-400/10 bg-violet-500/[0.06] px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-violet-300">
-                                    Recent
-                                  </span>
-                                )}
-                              </div>
+                              <span className="mt-0.5 text-xs text-slate-500">
+                                {row.year}
+                              </span>
                             </div>
                           </div>
                         </td>
 
-                        {METER_UTILITY_CONFIG.map((utility) => {
+                        {TENANT_METER_UTILITY_CONFIG.map((utility) => {
                           const value = row.values[utility.utilityType];
 
                           return (
