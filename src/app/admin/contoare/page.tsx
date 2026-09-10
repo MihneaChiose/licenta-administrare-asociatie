@@ -56,7 +56,7 @@ export default async function AdminMeterReadingsPage() {
     (utility) => utility.utilityType,
   );
 
-  const [meterReadings, totalApartments, currentMonthTransmissions] =
+  const [meterReadings, totalApartments, currentMonthReadings] =
     await Promise.all([
       prisma.meterReading.findMany({
         where: {
@@ -117,7 +117,7 @@ export default async function AdminMeterReadingsPage() {
         },
       }),
 
-      prisma.meterReading.count({
+      prisma.meterReading.findMany({
         where: {
           month: currentMonth,
           year: currentYear,
@@ -134,8 +134,20 @@ export default async function AdminMeterReadingsPage() {
             },
           },
         },
+
+        select: {
+          meter: {
+            select: {
+              apartmentId: true,
+            },
+          },
+        },
       }),
     ]);
+
+  const currentMonthApartmentsWithReadings = new Set(
+    currentMonthReadings.map((reading) => reading.meter.apartmentId),
+  ).size;
 
   const readingMap = new Map<string, AdminReadingRow>();
 
@@ -211,6 +223,30 @@ export default async function AdminMeterReadingsPage() {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="app-card relative overflow-hidden p-5">
+              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
+
+              <div className="relative flex items-start justify-between gap-4">
+                <div>
+                  <p className="text-sm font-medium text-slate-400">
+                    Transmiteri luna aceasta
+                  </p>
+
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {currentMonthApartmentsWithReadings}
+                  </p>
+
+                  <p className="mt-2 text-xs text-slate-500">
+                    Apartamente cu indexuri transmise
+                  </p>
+                </div>
+
+                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/10">
+                  <Gauge size={20} strokeWidth={1.8} />
+                </div>
+              </div>
+            </div>
+
+            <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-cyan-400/[0.07] blur-3xl" />
 
               <div className="relative flex items-start justify-between gap-4">
@@ -230,30 +266,6 @@ export default async function AdminMeterReadingsPage() {
 
                 <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/10">
                   <UsersRound size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Transmiteri luna aceasta
-                  </p>
-
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {currentMonthTransmissions}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Indexuri transmise in luna curenta
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/10">
-                  <Gauge size={20} strokeWidth={1.8} />
                 </div>
               </div>
             </div>
