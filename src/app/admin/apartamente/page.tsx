@@ -63,10 +63,6 @@ export default async function AdminApartmentsPage() {
               <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
                 Situatia apartamentelor
               </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Imagine de ansamblu asupra unitatilor locative administrate.
-              </p>
             </div>
 
             <Link

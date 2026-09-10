@@ -44,7 +44,7 @@ const adminNavigation = [
     icon: Building2,
   },
   {
-    href: "/admin/consumuri",
+    href: "/admin/contoare",
     label: "Indexuri contoare",
     icon: Gauge,
   },
