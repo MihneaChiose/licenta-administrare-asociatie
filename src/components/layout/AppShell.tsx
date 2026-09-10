@@ -5,7 +5,6 @@ import {
   Calculator,
   CircleGauge,
   ClipboardList,
-  CreditCard,
   Gauge,
   LayoutDashboard,
   LogOut,
@@ -57,11 +56,6 @@ const adminNavigation = [
     href: "/admin/intretinere",
     label: "Intretinere",
     icon: Calculator,
-  },
-  {
-    href: "/admin/plati",
-    label: "Plati",
-    icon: CreditCard,
   },
   {
     href: "/admin/sesizari",
@@ -195,10 +189,6 @@ export function AppShell({
           </div>
 
           <div className="mt-7 flex-1 overflow-y-auto pr-1">
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
-              Navigatie
-            </p>
-
             <nav className="space-y-1">
               {navigation.map((item) => (
                 <SidebarLink

@@ -1,5 +1,4 @@
 import {
-  Banknote,
   Building2,
   CalendarDays,
   CheckCircle2,
@@ -26,9 +25,8 @@ import { TenantLayout } from "@/components/layout/TenantLayout";
 import { InvoiceCalculationDetails } from "@/components/maintenance/InvoiceCalculationDetails";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { requestPaymentAction, startStripeCheckoutAction } from "./actions";
+import { startStripeCheckoutAction } from "./actions";
 
-const PAYMENT_METHOD_MANUAL = "MANUAL";
 const PAYMENT_METHOD_STRIPE = "STRIPE";
 
 const monthNames: Record<number, string> = {
@@ -77,19 +75,6 @@ function hasPendingStripePayment(
   );
 }
 
-function hasPendingManualPayment(
-  payments: Array<{
-    status: PaymentStatus;
-    method: string;
-  }>,
-) {
-  return payments.some(
-    (payment) =>
-      payment.status === PaymentStatus.PENDING &&
-      payment.method === PAYMENT_METHOD_MANUAL,
-  );
-}
-
 function getInvoiceStatusClass(status: InvoiceStatus) {
   if (status === InvoiceStatus.PAID) {
     return "border-emerald-400/15 bg-emerald-400/[0.07] text-emerald-300";
@@ -116,18 +101,6 @@ function getPaymentStatusClass(status: PaymentStatus) {
   }
 
   return "border-amber-400/15 bg-amber-400/[0.07] text-amber-300";
-}
-
-function getPaymentMethodLabel(method: string) {
-  if (method === PAYMENT_METHOD_STRIPE) {
-    return "Stripe";
-  }
-
-  if (method === PAYMENT_METHOD_MANUAL) {
-    return "Manuală";
-  }
-
-  return method;
 }
 
 type TenantInvoicesPageProps = {
@@ -220,6 +193,10 @@ export default async function TenantInvoicesPage({
       },
 
       payments: {
+        where: {
+          method: PAYMENT_METHOD_STRIPE,
+        },
+
         orderBy: {
           createdAt: "desc",
         },
@@ -457,10 +434,9 @@ export default async function TenantInvoicesPage({
               {invoices.map((invoice, index) => {
                 const pendingStripe = hasPendingStripePayment(invoice.payments);
 
-                const pendingManual = hasPendingManualPayment(invoice.payments);
-
                 const canInitiatePayment =
-                  invoice.status === InvoiceStatus.UNPAID;
+                  invoice.status !== InvoiceStatus.PAID &&
+                  invoice.status !== InvoiceStatus.CANCELLED;
 
                 return (
                   <article
@@ -558,27 +534,6 @@ export default async function TenantInvoicesPage({
                                     : "Plătește online cu Stripe"}
                                 </button>
                               </form>
-
-                              {!pendingStripe && (
-                                <form
-                                  action={requestPaymentAction}
-                                  className="w-full lg:w-auto"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="invoiceId"
-                                    value={invoice.id}
-                                  />
-
-                                  <button
-                                    type="submit"
-                                    className="app-button-secondary inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium lg:w-auto"
-                                  >
-                                    <Banknote size={16} />
-                                    Cerere plată manuală
-                                  </button>
-                                </form>
-                              )}
                             </div>
                           )}
                         </div>
@@ -604,26 +559,6 @@ export default async function TenantInvoicesPage({
                             </div>
                           </div>
                         )}
-
-                      {pendingManual && (
-                        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-400/10 bg-amber-400/[0.04] p-3.5">
-                          <Clock3
-                            size={17}
-                            className="mt-0.5 shrink-0 text-amber-300"
-                          />
-
-                          <div>
-                            <p className="text-sm font-medium text-amber-200">
-                              Cerere de plată în așteptare
-                            </p>
-
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                              Cererea manuală a fost transmisă și așteaptă
-                              confirmarea administratorului.
-                            </p>
-                          </div>
-                        </div>
-                      )}
 
                       {invoice.status === InvoiceStatus.PAID && (
                         <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-400/10 bg-emerald-400/[0.035] p-3.5">
@@ -731,25 +666,14 @@ export default async function TenantInvoicesPage({
                                 className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
                               >
                                 <div className="flex min-w-0 items-center gap-3">
-                                  <div
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ${
-                                      payment.method === PAYMENT_METHOD_STRIPE
-                                        ? "bg-violet-500/[0.07] text-violet-300 ring-violet-400/10"
-                                        : "bg-cyan-400/[0.06] text-cyan-300 ring-cyan-400/10"
-                                    }`}
-                                  >
-                                    {payment.method ===
-                                    PAYMENT_METHOD_STRIPE ? (
-                                      <CreditCard size={15} />
-                                    ) : (
-                                      <Banknote size={15} />
-                                    )}
+                                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-500/[0.07] text-violet-300 ring-1 ring-violet-400/10">
+                                    <CreditCard size={15} />
                                   </div>
 
                                   <div className="min-w-0">
                                     <div className="flex flex-wrap items-center gap-2">
                                       <p className="text-sm font-medium text-slate-300">
-                                        {getPaymentMethodLabel(payment.method)}
+                                        Stripe
                                       </p>
 
                                       <span

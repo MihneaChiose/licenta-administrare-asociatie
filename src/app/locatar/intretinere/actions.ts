@@ -12,7 +12,6 @@ import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
 import { stripe } from "@/lib/stripe";
 
-const PAYMENT_METHOD_MANUAL = "MANUAL";
 const PAYMENT_METHOD_STRIPE = "STRIPE";
 
 const requestPaymentSchema = z.object({
@@ -37,94 +36,6 @@ function getMaintenanceSuccessUrl(message: string) {
   return `/locatar/intretinere?success=${encodeURIComponent(message)}`;
 }
 
-export async function requestPaymentAction(formData: FormData) {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  if (session.role !== UserRole.TENANT) {
-    redirect("/admin/dashboard");
-  }
-
-  const parsed = requestPaymentSchema.safeParse({
-    invoiceId: formData.get("invoiceId"),
-  });
-
-  if (!parsed.success) {
-    const message = parsed.error.issues[0]?.message ?? "Date invalide";
-    redirect(getMaintenanceErrorUrl(message));
-  }
-
-  const invoice = await prisma.invoice.findFirst({
-    where: {
-      id: parsed.data.invoiceId,
-
-      apartment: {
-        ownerId: session.id,
-      },
-
-      maintenanceList: {
-        status: {
-          in: [MaintenanceListStatus.PUBLISHED, MaintenanceListStatus.CLOSED],
-        },
-      },
-    },
-    include: {
-      payments: true,
-    },
-  });
-
-  if (!invoice) {
-    redirect(
-      getMaintenanceErrorUrl("Factura nu exista sau nu apartine contului tau."),
-    );
-  }
-
-  if (invoice.status === InvoiceStatus.PAID) {
-    redirect(getMaintenanceErrorUrl("Factura este deja platita."));
-  }
-
-  const hasPendingPayment = invoice.payments.some(
-    (payment) => payment.status === PaymentStatus.PENDING,
-  );
-
-  if (hasPendingPayment || invoice.status === InvoiceStatus.PENDING) {
-    redirect(
-      getMaintenanceErrorUrl(
-        "Exista deja o plata in asteptare pentru aceasta factura.",
-      ),
-    );
-  }
-
-  await prisma.$transaction(async (tx) => {
-    await tx.payment.create({
-      data: {
-        invoiceId: invoice.id,
-        amount: invoice.totalAmount,
-        method: PAYMENT_METHOD_MANUAL,
-        status: PaymentStatus.PENDING,
-      },
-    });
-
-    await tx.invoice.update({
-      where: {
-        id: invoice.id,
-      },
-      data: {
-        status: InvoiceStatus.PENDING,
-      },
-    });
-  });
-
-  redirect(
-    getMaintenanceSuccessUrl(
-      "Cererea de plata a fost trimisa catre administrator.",
-    ),
-  );
-}
-
 export async function startStripeCheckoutAction(formData: FormData) {
   const session = await getSession();
 
@@ -142,6 +53,7 @@ export async function startStripeCheckoutAction(formData: FormData) {
 
   if (!parsed.success) {
     const message = parsed.error.issues[0]?.message ?? "Date invalide";
+
     redirect(getMaintenanceErrorUrl(message));
   }
 
@@ -159,8 +71,13 @@ export async function startStripeCheckoutAction(formData: FormData) {
         },
       },
     },
+
     include: {
-      payments: true,
+      payments: {
+        where: {
+          method: PAYMENT_METHOD_STRIPE,
+        },
+      },
 
       apartment: {
         select: {
@@ -180,32 +97,14 @@ export async function startStripeCheckoutAction(formData: FormData) {
     redirect(getMaintenanceErrorUrl("Factura este deja platita."));
   }
 
-  if (invoice.status === InvoiceStatus.PENDING) {
+  if (invoice.status === InvoiceStatus.CANCELLED) {
     redirect(
-      getMaintenanceErrorUrl(
-        "Exista deja o cerere de plata manuala in asteptare pentru aceasta factura.",
-      ),
-    );
-  }
-
-  const pendingManualPayment = invoice.payments.find(
-    (payment) =>
-      payment.status === PaymentStatus.PENDING &&
-      payment.method === PAYMENT_METHOD_MANUAL,
-  );
-
-  if (pendingManualPayment) {
-    redirect(
-      getMaintenanceErrorUrl(
-        "Exista deja o cerere de plata manuala in asteptare pentru aceasta factura.",
-      ),
+      getMaintenanceErrorUrl("Factura este anulata si nu poate fi platita."),
     );
   }
 
   const pendingStripePayment = invoice.payments.find(
-    (payment) =>
-      payment.status === PaymentStatus.PENDING &&
-      payment.method === PAYMENT_METHOD_STRIPE,
+    (payment) => payment.status === PaymentStatus.PENDING,
   );
 
   if (pendingStripePayment?.providerSessionId) {
