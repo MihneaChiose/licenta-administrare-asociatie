@@ -45,6 +45,10 @@ export async function getAdminDashboardStatistics(adminId: string) {
   const currentMonth = now.getMonth() + 1;
   const currentYear = now.getFullYear();
 
+  const currentMonthStart = new Date(currentYear, now.getMonth(), 1);
+
+  const nextMonthStart = new Date(currentYear, now.getMonth() + 1, 1);
+
   const expenses = await prisma.expense.aggregate({
     where: {
       associationId,
@@ -72,9 +76,14 @@ export async function getAdminDashboardStatistics(adminId: string) {
     },
   });
 
-  const pendingPayments = await prisma.payment.count({
+  const monthlyPayments = await prisma.payment.aggregate({
     where: {
-      status: "PENDING",
+      status: "PAID",
+
+      paidAt: {
+        gte: currentMonthStart,
+        lt: nextMonthStart,
+      },
 
       invoice: {
         apartmentId: {
@@ -88,6 +97,10 @@ export async function getAdminDashboardStatistics(adminId: string) {
         },
       },
     },
+
+    _sum: {
+      amount: true,
+    },
   });
 
   const openTickets = await prisma.ticket.count({
@@ -95,6 +108,7 @@ export async function getAdminDashboardStatistics(adminId: string) {
       apartmentId: {
         in: apartmentIds,
       },
+
       status: {
         in: ["OPEN", "IN_PROGRESS"],
       },
@@ -105,8 +119,8 @@ export async function getAdminDashboardStatistics(adminId: string) {
     totalApartments,
     totalResidents,
     totalExpenses: expenses._sum.totalAmount ?? 0,
+    totalMonthlyPayments: monthlyPayments._sum.amount ?? 0,
     unpaidInvoices,
-    pendingPayments,
     openTickets,
   };
 }

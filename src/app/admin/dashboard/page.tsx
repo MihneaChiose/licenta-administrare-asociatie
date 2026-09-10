@@ -1,7 +1,7 @@
 import {
+  Banknote,
   BellRing,
   Building2,
-  CreditCard,
   ReceiptText,
   TriangleAlert,
   UsersRound,
@@ -98,6 +98,24 @@ export default async function AdminDashboardPage() {
             />
 
             <StatisticsCard
+              title="Sesizari active"
+              value={statistics.openTickets}
+              description="Sesizari deschise sau aflate in lucru"
+              icon={BellRing}
+              accent={statistics.openTickets > 0 ? "amber" : "emerald"}
+            />
+
+            <StatisticsCard
+              title="Incasari luna aceasta"
+              value={`${Number(statistics.totalMonthlyPayments).toFixed(
+                2,
+              )} RON`}
+              description="Plati confirmate in luna curenta"
+              icon={Banknote}
+              accent="emerald"
+            />
+
+            <StatisticsCard
               title="Cheltuieli luna aceasta"
               value={`${Number(statistics.totalExpenses).toFixed(2)} RON`}
               description="Total cheltuieli in luna curenta"
@@ -111,22 +129,6 @@ export default async function AdminDashboardPage() {
               description="Facturi care nu au fost achitate"
               icon={WalletCards}
               accent={statistics.unpaidInvoices > 0 ? "rose" : "emerald"}
-            />
-
-            <StatisticsCard
-              title="Plati in asteptare"
-              value={statistics.pendingPayments}
-              description="Plati care necesita verificare"
-              icon={CreditCard}
-              accent={statistics.pendingPayments > 0 ? "amber" : "emerald"}
-            />
-
-            <StatisticsCard
-              title="Sesizari active"
-              value={statistics.openTickets}
-              description="Sesizari deschise sau aflate in lucru"
-              icon={BellRing}
-              accent={statistics.openTickets > 0 ? "amber" : "emerald"}
             />
           </div>
         </section>
