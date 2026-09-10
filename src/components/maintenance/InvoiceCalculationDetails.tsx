@@ -130,7 +130,7 @@ export function InvoiceCalculationDetails({
                   <div className="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
                     <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                       <Scale size={12} />
-                      Metodă
+                      Metodă împărțire
                     </dt>
 
                     <dd className="mt-1.5 text-sm font-medium text-slate-300">
