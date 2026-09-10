@@ -98,7 +98,7 @@ const tenantNavigation = [
   },
   {
     href: "/locatar/avizier",
-    label: "Avizier virtual",
+    label: "Avizier",
     icon: Megaphone,
   },
 ];
@@ -220,14 +220,6 @@ export function AppShell({
               tone="danger"
               onClick={() => setMobileMenuOpen(false)}
             />
-
-            <div className="mt-4 px-3">
-              <p className="text-[11px] leading-5 text-slate-600">
-                Smart property management
-              </p>
-
-              <p className="text-[10px] text-slate-700">v1.0</p>
-            </div>
           </div>
         </div>
       </aside>
