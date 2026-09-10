@@ -72,7 +72,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="relative flex items-center gap-3 text-xs text-slate-500">
             <ShieldCheck size={17} className="text-violet-400" />
 
-            <span>Acces securizat pentru administratori si locatari</span>
+            <span>Acces securizat</span>
           </div>
         </section>
 
@@ -124,7 +124,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                     required
                     autoComplete="email"
                     className="app-input py-3 pl-11 pr-4"
-                    placeholder="admin@test.com"
+                    placeholder="email@exemplu.com"
                   />
                 </div>
               </div>
@@ -162,28 +162,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
                 Intra in cont
               </button>
             </form>
-
-            <div className="mt-7 rounded-2xl border border-white/[0.055] bg-white/[0.025] p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">
-                Conturi de test
-              </p>
-
-              <div className="mt-3 space-y-2 text-xs text-slate-400">
-                <p>
-                  Admin:{" "}
-                  <span className="text-slate-300">
-                    admin@test.com / admin123
-                  </span>
-                </p>
-
-                <p>
-                  Locatar:{" "}
-                  <span className="text-slate-300">
-                    locatar@test.com / locatar123
-                  </span>
-                </p>
-              </div>
-            </div>
           </div>
         </section>
       </div>
