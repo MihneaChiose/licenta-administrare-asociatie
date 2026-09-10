@@ -1,4 +1,4 @@
-"use server";
+﻿"use server";
 
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -25,13 +25,13 @@ const readingValueSchema = z.preprocess(
 const meterReadingSchema = z.object({
   month: z.coerce
     .number()
-    .int("Luna trebuie să fie număr întreg")
-    .min(1, "Luna trebuie să fie între 1 și 12")
-    .max(12, "Luna trebuie să fie între 1 și 12"),
+    .int("Luna trebuie sÄƒ fie numÄƒr Ã®ntreg")
+    .min(1, "Luna trebuie sÄƒ fie Ã®ntre 1 È™i 12")
+    .max(12, "Luna trebuie sÄƒ fie Ã®ntre 1 È™i 12"),
 
   year: z.coerce
     .number()
-    .int("Anul trebuie să fie număr întreg")
+    .int("Anul trebuie sÄƒ fie numÄƒr Ã®ntreg")
     .min(2024, "Anul este prea mic")
     .max(2100, "Anul este prea mare"),
 
@@ -67,7 +67,7 @@ export async function submitMeterReadingAction(formData: FormData) {
   if (!parsed.success) {
     const message = parsed.error.issues[0]?.message ?? "Date invalide";
 
-    redirect(`/locatar/consum?error=${encodeURIComponent(message)}`);
+    redirect(`/locatar/contoare?error=${encodeURIComponent(message)}`);
   }
 
   const currentDate = new Date();
@@ -80,7 +80,7 @@ export async function submitMeterReadingAction(formData: FormData) {
 
   if (isFuturePeriod) {
     redirect(
-      `/locatar/consum?error=${encodeURIComponent(
+      `/locatar/contoare?error=${encodeURIComponent(
         "Indexurile nu pot fi transmise pentru perioade viitoare.",
       )}`,
     );
@@ -92,15 +92,15 @@ export async function submitMeterReadingAction(formData: FormData) {
 
   if (!utility) {
     redirect(
-      `/locatar/consum?error=${encodeURIComponent(
-        "Utilitatea selectată nu este validă.",
+      `/locatar/contoare?error=${encodeURIComponent(
+        "Utilitatea selectatÄƒ nu este validÄƒ.",
       )}`,
     );
   }
 
   if (!hasMaximumDecimals(parsed.data.readingValue, utility.decimals)) {
     redirect(
-      `/locatar/consum?error=${encodeURIComponent(
+      `/locatar/contoare?error=${encodeURIComponent(
         `${utility.label}: indexul poate avea maximum ${utility.decimals} zecimale.`,
       )}`,
     );
@@ -123,8 +123,8 @@ export async function submitMeterReadingAction(formData: FormData) {
 
   if (!apartment) {
     redirect(
-      `/locatar/consum?error=${encodeURIComponent(
-        "Nu există niciun apartament asociat acestui cont.",
+      `/locatar/contoare?error=${encodeURIComponent(
+        "Nu existÄƒ niciun apartament asociat acestui cont.",
       )}`,
     );
   }
@@ -135,7 +135,7 @@ export async function submitMeterReadingAction(formData: FormData) {
 
   if (!meter) {
     redirect(
-      `/locatar/consum?error=${encodeURIComponent(
+      `/locatar/contoare?error=${encodeURIComponent(
         `Contorul pentru ${utility.label} nu este configurat pentru acest apartament.`,
       )}`,
     );
@@ -155,8 +155,8 @@ export async function submitMeterReadingAction(formData: FormData) {
 
   if (existingReading) {
     redirect(
-      `/locatar/consum?error=${encodeURIComponent(
-        `Indexul pentru ${utility.label} a fost deja transmis pentru perioada selectată.`,
+      `/locatar/contoare?error=${encodeURIComponent(
+        `Indexul pentru ${utility.label} a fost deja transmis pentru perioada selectatÄƒ.`,
       )}`,
     );
   }
@@ -198,8 +198,8 @@ export async function submitMeterReadingAction(formData: FormData) {
 
     if (currentValue < previousValue) {
       redirect(
-        `/locatar/consum?error=${encodeURIComponent(
-          `${utility.label}: indexul curent (${currentValue}) nu poate fi mai mic decât indexul lunii precedente (${previousValue}).`,
+        `/locatar/contoare?error=${encodeURIComponent(
+          `${utility.label}: indexul curent (${currentValue}) nu poate fi mai mic decÃ¢t indexul lunii precedente (${previousValue}).`,
         )}`,
       );
     }
@@ -210,8 +210,8 @@ export async function submitMeterReadingAction(formData: FormData) {
 
     if (currentValue > nextValue) {
       redirect(
-        `/locatar/consum?error=${encodeURIComponent(
-          `${utility.label}: indexul introdus (${currentValue}) nu poate fi mai mare decât indexul lunii următoare deja transmis (${nextValue}).`,
+        `/locatar/contoare?error=${encodeURIComponent(
+          `${utility.label}: indexul introdus (${currentValue}) nu poate fi mai mare decÃ¢t indexul lunii urmÄƒtoare deja transmis (${nextValue}).`,
         )}`,
       );
     }
@@ -227,8 +227,9 @@ export async function submitMeterReadingAction(formData: FormData) {
   });
 
   redirect(
-    `/locatar/consum?success=${encodeURIComponent(
+    `/locatar/contoare?success=${encodeURIComponent(
       `Indexul pentru ${utility.label} a fost transmis cu succes.`,
     )}`,
   );
 }
+

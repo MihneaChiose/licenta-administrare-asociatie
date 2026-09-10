@@ -82,7 +82,7 @@ const tenantNavigation = [
     icon: LayoutDashboard,
   },
   {
-    href: "/locatar/consum",
+    href: "/locatar/contoare",
     label: "Indexuri contoare",
     icon: CircleGauge,
   },
