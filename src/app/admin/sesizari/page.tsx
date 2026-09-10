@@ -138,7 +138,6 @@ export default async function AdminTicketsPage({
       apartment: {
         include: {
           owner: true,
-          association: true,
         },
       },
     },
@@ -169,14 +168,8 @@ export default async function AdminTicketsPage({
     ).length,
   };
 
-  const activeTickets =
-    statusCounts[TicketStatus.OPEN] + statusCounts[TicketStatus.IN_PROGRESS];
-
   return (
-    <AdminLayout
-      title="Sesizări locatari"
-      description="Gestionează și urmărește sesizările trimise de locatarii din asociația administrată."
-    >
+    <AdminLayout title="Sesizări">
       <div className="mx-auto max-w-7xl space-y-8">
         {params.error && (
           <div className="flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.08] p-4 text-sm text-rose-300">
@@ -205,13 +198,8 @@ export default async function AdminTicketsPage({
             </div>
 
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
-              Centru de sesizări
+              Sesizările locatarilor
             </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Monitorizează solicitările locatarilor și evoluția lor prin fluxul
-              de soluționare.
-            </p>
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
@@ -339,11 +327,6 @@ export default async function AdminTicketsPage({
               <h2 className="mt-2 text-lg font-semibold text-slate-100">
                 Lista sesizări
               </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Afișate: {tickets.length} din {allTickets.length}
-                {activeTickets > 0 && <> · {activeTickets} active</>}
-              </p>
             </div>
 
             <div className="flex flex-wrap gap-2">
@@ -426,13 +409,6 @@ export default async function AdminTicketsPage({
                                 {ticketStatusLabels[ticket.status]}
                               </span>
                             </div>
-
-                            <p className="mt-1 text-xs text-slate-600">
-                              ID sesizare:{" "}
-                              <span className="font-mono">
-                                {ticket.id.slice(-8)}
-                              </span>
-                            </p>
                           </div>
                         </div>
 
@@ -444,11 +420,7 @@ export default async function AdminTicketsPage({
                             </p>
 
                             <p className="mt-1.5 text-sm font-medium text-slate-300">
-                              Ap. {ticket.apartment.number}
-                            </p>
-
-                            <p className="mt-0.5 truncate text-xs text-slate-600">
-                              {ticket.apartment.association.name}
+                              {ticket.apartment.number}
                             </p>
                           </div>
 
@@ -522,10 +494,6 @@ export default async function AdminTicketsPage({
                                 <p className="text-sm font-medium text-slate-300">
                                   {ticketStatusLabels[nextStatus]}
                                 </p>
-
-                                <p className="mt-0.5 text-xs text-slate-600">
-                                  Tranziție permisă
-                                </p>
                               </div>
                             </div>
 
@@ -577,11 +545,6 @@ export default async function AdminTicketsPage({
                                 </p>
                               </div>
                             </div>
-
-                            <p className="mt-3 text-xs leading-5 text-slate-500">
-                              Nu mai sunt necesare acțiuni pentru această
-                              sesizare.
-                            </p>
                           </div>
                         )}
                       </div>
