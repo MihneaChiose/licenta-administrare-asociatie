@@ -21,7 +21,7 @@ export default async function RegisterPage({
   const params = await searchParams;
 
   return (
-    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#070b14] px-4 py-10 text-slate-100">
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden bg-[#070b14] px-4 py-6 text-slate-100">
       <div className="pointer-events-none absolute -left-40 -top-40 h-[500px] w-[500px] rounded-full bg-violet-600/15 blur-[110px]" />
 
       <div className="pointer-events-none absolute -bottom-48 -right-32 h-[500px] w-[500px] rounded-full bg-cyan-400/[0.08] blur-[120px]" />
@@ -36,9 +36,7 @@ export default async function RegisterPage({
       />
 
       <div className="relative grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/[0.075] bg-[#0d1424]/80 shadow-[0_40px_120px_rgba(0,0,0,0.42)] backdrop-blur-2xl lg:grid-cols-[1.05fr_0.95fr]">
-        <section className="relative hidden overflow-hidden border-r border-white/[0.06] p-12 lg:flex lg:flex-col lg:justify-between">
-          <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 bg-gradient-to-bl from-violet-500/[0.12] via-cyan-400/[0.03] to-transparent" />
-
+        <section className="relative hidden overflow-hidden border-r border-white/[0.06] p-10 lg:flex lg:flex-col lg:justify-between">
           <div className="relative">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400 shadow-[0_12px_35px_rgba(118,103,247,0.28)]">
@@ -60,7 +58,7 @@ export default async function RegisterPage({
               </div>
             </div>
 
-            <h1 className="mt-14 max-w-md text-4xl font-semibold leading-[1.08] tracking-[-0.045em] text-white">
+            <h1 className="mt-20 max-w-md text-4xl font-semibold leading-[1.08] tracking-[-0.045em] text-white">
               Administrarea asociației,
               <span className="block bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-transparent">
                 simplificată digital.
@@ -75,7 +73,7 @@ export default async function RegisterPage({
           </div>
         </section>
 
-        <section className="p-7 sm:p-10 lg:p-12">
+        <section className="p-7 sm:p-9 lg:p-10">
           <div className="mx-auto max-w-sm">
             <div className="lg:hidden">
               <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400">
@@ -97,7 +95,7 @@ export default async function RegisterPage({
               </div>
             )}
 
-            <form action={registerAction} className="mt-8 space-y-5">
+            <form action={registerAction} className="mt-6 space-y-4">
               <div>
                 <label
                   htmlFor="name"

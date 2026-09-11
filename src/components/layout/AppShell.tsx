@@ -254,8 +254,6 @@ export function AppShell({
           <div className="mx-auto max-w-[1600px] px-4 py-7 sm:px-6 lg:px-10 lg:py-9">
             {(title || description) && (
               <section className="animate-page-enter relative mb-8 overflow-hidden rounded-[26px] border border-white/[0.07] bg-[#10182a]/70 px-6 py-6 shadow-[0_22px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-8 sm:py-7">
-                <div className="pointer-events-none absolute right-0 top-0 h-36 w-56 bg-gradient-to-bl from-violet-500/[0.09] via-cyan-400/[0.035] to-transparent" />
-
                 <div className="relative">
                   <div className="mb-3 flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-violet-500 shadow-[0_0_10px_rgba(105,92,246,0.7)]" />

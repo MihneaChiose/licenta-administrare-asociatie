@@ -35,8 +35,6 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
       <div className="relative grid w-full max-w-5xl overflow-hidden rounded-[32px] border border-white/[0.075] bg-[#0d1424]/80 shadow-[0_40px_120px_rgba(0,0,0,0.42)] backdrop-blur-2xl lg:grid-cols-[1.05fr_0.95fr]">
         <section className="relative hidden overflow-hidden border-r border-white/[0.06] p-12 lg:flex lg:flex-col lg:justify-between">
-          <div className="pointer-events-none absolute right-0 top-0 h-72 w-72 bg-gradient-to-bl from-violet-500/[0.12] via-cyan-400/[0.03] to-transparent" />
-
           <div className="relative">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-500 to-cyan-400 shadow-[0_12px_35px_rgba(118,103,247,0.28)]">
@@ -59,9 +57,9 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             </div>
 
             <h1 className="mt-14 max-w-md text-4xl font-semibold leading-[1.08] tracking-[-0.045em] text-white">
-              Administrarea asociatiei,
+              Administrarea asociației,
               <span className="block bg-gradient-to-r from-violet-300 to-cyan-300 bg-clip-text text-transparent">
-                simplificata digital.
+                simplificată digital.
               </span>
             </h1>
           </div>
