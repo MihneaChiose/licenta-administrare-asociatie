@@ -149,10 +149,10 @@ export default async function AdminMaintenancePage({
   );
 
   const currentListStatus = !currentMaintenanceList
-    ? "NEGENERATA"
+    ? "NEGENERATĂ"
     : currentMaintenanceList.status === MaintenanceListStatus.CALCULATED
-      ? "GENERATA"
-      : "PUBLICATA";
+      ? "GENERATĂ"
+      : "PUBLICATĂ";
 
   return (
     <AdminLayout title="Liste de întreținere">
