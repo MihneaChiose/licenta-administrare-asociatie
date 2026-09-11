@@ -3,21 +3,10 @@
 import type { FormEvent } from "react";
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { AlertCircle, Building2, Loader2, Megaphone, Send } from "lucide-react";
+import { AlertCircle, Loader2, Send } from "lucide-react";
 import { createAnnouncementAction } from "./actions";
 
-type AssociationOption = {
-  id: string;
-  name: string;
-};
-
-type CreateAnnouncementFormProps = {
-  associations: AssociationOption[];
-};
-
-export function CreateAnnouncementForm({
-  associations,
-}: CreateAnnouncementFormProps) {
+export function CreateAnnouncementForm() {
   const router = useRouter();
 
   const [error, setError] = useState<string | null>(null);
@@ -60,61 +49,7 @@ export function CreateAnnouncementForm({
         </div>
       )}
 
-      <form onSubmit={handleSubmit} className="mt-6 space-y-5">
-        <div>
-          <label
-            htmlFor="associationId"
-            className="text-sm font-medium text-slate-300"
-          >
-            Asociație
-          </label>
-
-          {associations.length === 1 ? (
-            <>
-              <input
-                type="hidden"
-                name="associationId"
-                value={associations[0].id}
-              />
-
-              <div className="mt-2 flex items-center gap-3 rounded-xl border border-cyan-400/10 bg-cyan-400/[0.035] px-3.5 py-3">
-                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-cyan-400/[0.08] text-cyan-300 ring-1 ring-cyan-400/10">
-                  <Building2 size={15} />
-                </div>
-
-                <div className="min-w-0">
-                  <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                    Destinație
-                  </p>
-
-                  <p className="mt-0.5 truncate text-sm font-medium text-slate-300">
-                    {associations[0].name}
-                  </p>
-                </div>
-              </div>
-            </>
-          ) : (
-            <select
-              id="associationId"
-              name="associationId"
-              required
-              defaultValue=""
-              disabled={isPending}
-              className="app-input mt-2 px-3 py-3 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <option value="" disabled>
-                Selectează asociația
-              </option>
-
-              {associations.map((association) => (
-                <option key={association.id} value={association.id}>
-                  {association.name}
-                </option>
-              ))}
-            </select>
-          )}
-        </div>
-
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
           <label htmlFor="title" className="text-sm font-medium text-slate-300">
             Titlu
@@ -133,7 +68,7 @@ export function CreateAnnouncementForm({
           />
 
           <p className="mt-1.5 text-xs text-slate-600">
-            Între 3 și 100 de caractere.
+            Maximum 100 de caractere.
           </p>
         </div>
 
@@ -158,19 +93,8 @@ export function CreateAnnouncementForm({
           />
 
           <p className="mt-1.5 text-xs text-slate-600">
-            Mesajul poate avea maximum 2000 de caractere.
+            Maximum 2000 de caractere
           </p>
-        </div>
-
-        <div className="rounded-xl border border-violet-400/10 bg-violet-500/[0.035] p-3.5">
-          <div className="flex items-start gap-2.5">
-            <Megaphone size={16} className="mt-0.5 shrink-0 text-violet-300" />
-
-            <p className="text-xs leading-5 text-slate-500">
-              După publicare, anunțul devine vizibil locatarilor din asociația
-              selectată. Îl vei putea edita sau retrage ulterior.
-            </p>
-          </div>
         </div>
 
         <button

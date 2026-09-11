@@ -14,7 +14,6 @@ const updateTicketStatusSchema = z.object({
 const nextTicketStatus: Partial<Record<TicketStatus, TicketStatus>> = {
   [TicketStatus.OPEN]: TicketStatus.IN_PROGRESS,
   [TicketStatus.IN_PROGRESS]: TicketStatus.RESOLVED,
-  [TicketStatus.RESOLVED]: TicketStatus.CLOSED,
 };
 
 type TicketFilter = TicketStatus | "ALL";
@@ -99,7 +98,7 @@ export async function updateTicketStatusAction(formData: FormData) {
     redirect(
       getAdminTicketsRedirectUrl(
         "error",
-        "Sesizarea este deja inchisa si nu mai poate fi actualizata.",
+        "Sesizarea este deja rezolvata si nu mai poate fi actualizata.",
         returnFilter,
       ),
     );

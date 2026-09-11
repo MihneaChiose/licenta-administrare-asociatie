@@ -6,34 +6,45 @@ export const METER_UTILITY_CONFIG = [
     fieldName: "coldWater",
     label: "Apă rece",
     unit: "m³",
+    decimals: 3,
   },
   {
     utilityType: UtilityType.HOT_WATER,
     fieldName: "hotWater",
     label: "Apă caldă",
     unit: "m³",
+    decimals: 3,
   },
   {
     utilityType: UtilityType.GAS,
     fieldName: "gas",
     label: "Gaze",
     unit: "m³",
+    decimals: 3,
   },
   {
     utilityType: UtilityType.ELECTRICITY,
     fieldName: "electricity",
     label: "Electricitate",
     unit: "kWh",
+    decimals: 2,
   },
   {
     utilityType: UtilityType.HEATING,
     fieldName: "heating",
     label: "Căldură",
     unit: "unități",
+    decimals: 3,
   },
 ] as const;
 
+export const TENANT_METER_UTILITY_CONFIG = METER_UTILITY_CONFIG.filter(
+  (utility) => utility.utilityType !== UtilityType.HEATING,
+);
+
 export const REQUIRED_METER_COUNT = METER_UTILITY_CONFIG.length;
+
+export const TENANT_REQUIRED_METER_COUNT = TENANT_METER_UTILITY_CONFIG.length;
 
 export type MonthPeriod = {
   month: number;

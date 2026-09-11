@@ -53,8 +53,8 @@ const quantityFormatter = new Intl.NumberFormat("ro-RO", {
 });
 
 const percentageFormatter = new Intl.NumberFormat("ro-RO", {
-  minimumFractionDigits: 0,
-  maximumFractionDigits: 4,
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 2,
 });
 
 export function InvoiceCalculationDetails({
@@ -72,6 +72,12 @@ export function InvoiceCalculationDetails({
           item.sharePercentage !== null &&
           item.basisUnit !== null;
 
+        const itemTitle =
+          item.description?.trim() ||
+          (item.expenseCategory
+            ? EXPENSE_CATEGORY_LABELS[item.expenseCategory]
+            : "Cheltuială");
+
         return (
           <div
             key={item.id}
@@ -87,11 +93,11 @@ export function InvoiceCalculationDetails({
                   </div>
 
                   <p className="break-words font-medium text-slate-200">
-                    {item.description}
+                    {itemTitle}
                   </p>
                 </div>
 
-                {hasSnapshot && (
+                {hasSnapshot && item.description?.trim() && (
                   <p className="ml-10 mt-1 text-xs text-slate-500">
                     {EXPENSE_CATEGORY_LABELS[item.expenseCategory!]}
                   </p>
@@ -124,7 +130,7 @@ export function InvoiceCalculationDetails({
                   <div className="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
                     <dt className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
                       <Scale size={12} />
-                      Metodă
+                      Metodă împărțire
                     </dt>
 
                     <dd className="mt-1.5 text-sm font-medium text-slate-300">
@@ -138,7 +144,7 @@ export function InvoiceCalculationDetails({
 
                   <div className="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
                     <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                      Bază apartament
+                      Apartament
                     </dt>
 
                     <dd className="mt-1.5 text-sm font-medium tabular-nums text-slate-300">
@@ -153,7 +159,7 @@ export function InvoiceCalculationDetails({
 
                   <div className="rounded-xl border border-white/[0.05] bg-white/[0.025] p-3">
                     <dt className="text-[10px] font-semibold uppercase tracking-[0.12em] text-slate-600">
-                      Bază totală
+                      Total
                     </dt>
 
                     <dd className="mt-1.5 text-sm font-medium tabular-nums text-slate-300">

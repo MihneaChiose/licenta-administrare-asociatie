@@ -1,35 +1,26 @@
 import {
-  Banknote,
   Building2,
   CalendarDays,
   CheckCircle2,
   ChevronDown,
   CircleDollarSign,
-  Clock3,
   CreditCard,
   FileText,
-  Info,
   ReceiptText,
-  ShieldCheck,
   TriangleAlert,
-  WalletCards,
   XCircle,
 } from "lucide-react";
 import { redirect } from "next/navigation";
 import {
   InvoiceStatus,
   MaintenanceListStatus,
-  PaymentStatus,
   UserRole,
 } from "@/generated/prisma/client";
 import { TenantLayout } from "@/components/layout/TenantLayout";
 import { InvoiceCalculationDetails } from "@/components/maintenance/InvoiceCalculationDetails";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { requestPaymentAction, startStripeCheckoutAction } from "./actions";
-
-const PAYMENT_METHOD_MANUAL = "MANUAL";
-const PAYMENT_METHOD_STRIPE = "STRIPE";
+import { startStripeCheckoutAction } from "./actions";
 
 const monthNames: Record<number, string> = {
   1: "Ianuarie",
@@ -53,44 +44,16 @@ const invoiceStatusLabels: Record<InvoiceStatus, string> = {
   CANCELLED: "Anulată",
 };
 
-const paymentStatusLabels: Record<PaymentStatus, string> = {
-  PENDING: "În așteptare",
-  PAID: "Confirmată",
-  REJECTED: "Respinsă / expirată",
-};
-
 const moneyFormatter = new Intl.NumberFormat("ro-RO", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
 
-function hasPendingStripePayment(
-  payments: Array<{
-    status: PaymentStatus;
-    method: string;
-  }>,
-) {
-  return payments.some(
-    (payment) =>
-      payment.status === PaymentStatus.PENDING &&
-      payment.method === PAYMENT_METHOD_STRIPE,
-  );
-}
-
-function hasPendingManualPayment(
-  payments: Array<{
-    status: PaymentStatus;
-    method: string;
-  }>,
-) {
-  return payments.some(
-    (payment) =>
-      payment.status === PaymentStatus.PENDING &&
-      payment.method === PAYMENT_METHOD_MANUAL,
-  );
-}
-
 function getInvoiceStatusClass(status: InvoiceStatus) {
+  if (status === InvoiceStatus.UNPAID) {
+    return "border-rose-400/15 bg-rose-400/[0.07] text-rose-300";
+  }
+
   if (status === InvoiceStatus.PAID) {
     return "border-emerald-400/15 bg-emerald-400/[0.07] text-emerald-300";
   }
@@ -100,34 +63,10 @@ function getInvoiceStatusClass(status: InvoiceStatus) {
   }
 
   if (status === InvoiceStatus.CANCELLED) {
-    return "border-rose-400/15 bg-rose-400/[0.07] text-rose-300";
+    return "border-slate-400/10 bg-slate-400/[0.06] text-slate-400";
   }
 
-  return "border-violet-400/15 bg-violet-500/[0.07] text-violet-300";
-}
-
-function getPaymentStatusClass(status: PaymentStatus) {
-  if (status === PaymentStatus.PAID) {
-    return "border-emerald-400/15 bg-emerald-400/[0.07] text-emerald-300";
-  }
-
-  if (status === PaymentStatus.REJECTED) {
-    return "border-rose-400/15 bg-rose-400/[0.07] text-rose-300";
-  }
-
-  return "border-amber-400/15 bg-amber-400/[0.07] text-amber-300";
-}
-
-function getPaymentMethodLabel(method: string) {
-  if (method === PAYMENT_METHOD_STRIPE) {
-    return "Stripe";
-  }
-
-  if (method === PAYMENT_METHOD_MANUAL) {
-    return "Manuală";
-  }
-
-  return method;
+  return "border-white/[0.07] bg-white/[0.035] text-slate-400";
 }
 
 type TenantInvoicesPageProps = {
@@ -164,10 +103,7 @@ export default async function TenantInvoicesPage({
 
   if (!apartment) {
     return (
-      <TenantLayout
-        title="Informații indisponibile"
-        description="Contul tău nu este asociat momentan unui apartament."
-      >
+      <TenantLayout title="Informații indisponibile">
         <div className="mx-auto max-w-4xl">
           <div className="app-card relative overflow-hidden p-8">
             <div className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-amber-400/[0.05] blur-3xl" />
@@ -218,12 +154,6 @@ export default async function TenantInvoicesPage({
           description: "asc",
         },
       },
-
-      payments: {
-        orderBy: {
-          createdAt: "desc",
-        },
-      },
     },
 
     orderBy: [
@@ -240,35 +170,13 @@ export default async function TenantInvoicesPage({
     (invoice) => invoice.status === InvoiceStatus.UNPAID,
   );
 
-  const paidInvoices = invoices.filter(
-    (invoice) => invoice.status === InvoiceStatus.PAID,
-  );
-
-  const pendingInvoices = invoices.filter(
-    (invoice) => invoice.status === InvoiceStatus.PENDING,
-  );
-
   const totalUnpaid = unpaidInvoices.reduce(
     (sum, invoice) => sum + Number(invoice.totalAmount.toString()),
     0,
   );
 
-  const totalPaid = paidInvoices.reduce(
-    (sum, invoice) => sum + Number(invoice.totalAmount.toString()),
-    0,
-  );
-
-  const latestInvoice = invoices[0];
-
-  const latestPeriod = latestInvoice
-    ? `${monthNames[latestInvoice.month]} ${latestInvoice.year}`
-    : "-";
-
   return (
-    <TenantLayout
-      title="Întreținerea mea"
-      description={`Facturi și plăți pentru Apartamentul ${apartment.number}`}
-    >
+    <TenantLayout title="Întreținere și plăți">
       <div className="mx-auto max-w-7xl space-y-8">
         {params.error && (
           <div className="flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.08] p-4 text-sm leading-6 text-rose-300">
@@ -299,14 +207,9 @@ export default async function TenantInvoicesPage({
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
               Situație întreținere
             </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Consultă listele publicate, detaliile de calcul și statusul
-              plăților tale.
-            </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-rose-400/[0.06] blur-3xl" />
 
@@ -320,9 +223,7 @@ export default async function TenantInvoicesPage({
                     {moneyFormatter.format(totalUnpaid)}
                   </p>
 
-                  <p className="mt-2 text-xs text-slate-500">
-                    RON · {unpaidInvoices.length} facturi
-                  </p>
+                  <p className="mt-2 text-xs text-slate-500">RON</p>
                 </div>
 
                 <div
@@ -338,73 +239,25 @@ export default async function TenantInvoicesPage({
             </div>
 
             <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-400/[0.06] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Total achitat
-                  </p>
-
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {moneyFormatter.format(totalPaid)}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    RON · {paidInvoices.length} facturi
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
-                  <CheckCircle2 size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-amber-400/[0.06] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    În așteptare
-                  </p>
-
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {pendingInvoices.length}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Facturi cu plată în procesare
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-amber-400/10 text-amber-300 ring-1 ring-amber-400/10">
-                  <Clock3 size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">
-                    Ultima listă
+                    Facturi restante
                   </p>
 
-                  <p className="mt-3 text-xl font-semibold tracking-[-0.03em] text-slate-50">
-                    {latestPeriod}
+                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
+                    {unpaidInvoices.length}
                   </p>
 
                   <p className="mt-2 text-xs text-slate-500">
-                    {invoices.length} perioade disponibile
+                    Facturi neplătite
                   </p>
                 </div>
 
                 <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-violet-500/10 text-violet-300 ring-1 ring-violet-400/10">
-                  <CalendarDays size={20} strokeWidth={1.8} />
+                  <ReceiptText size={20} strokeWidth={1.8} />
                 </div>
               </div>
             </div>
@@ -423,12 +276,8 @@ export default async function TenantInvoicesPage({
               </div>
 
               <h2 className="mt-2 text-lg font-semibold text-slate-100">
-                Istoric întreținere
+                Istoric
               </h2>
-
-              <p className="mt-1 text-sm text-slate-500">
-                Listele publicate pentru apartamentul tău.
-              </p>
             </div>
 
             <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs text-slate-500">
@@ -454,13 +303,10 @@ export default async function TenantInvoicesPage({
             </div>
           ) : (
             <div className="space-y-5 p-5 sm:p-6">
-              {invoices.map((invoice, index) => {
-                const pendingStripe = hasPendingStripePayment(invoice.payments);
-
-                const pendingManual = hasPendingManualPayment(invoice.payments);
-
+              {invoices.map((invoice) => {
                 const canInitiatePayment =
-                  invoice.status === InvoiceStatus.UNPAID;
+                  invoice.status !== InvoiceStatus.PAID &&
+                  invoice.status !== InvoiceStatus.CANCELLED;
 
                 return (
                   <article
@@ -482,12 +328,6 @@ export default async function TenantInvoicesPage({
                                 <h3 className="text-xl font-semibold tracking-[-0.03em] text-slate-100">
                                   {monthNames[invoice.month]} {invoice.year}
                                 </h3>
-
-                                {index === 0 && (
-                                  <span className="rounded-lg border border-violet-400/10 bg-violet-500/[0.06] px-2 py-1 text-[9px] font-semibold uppercase tracking-[0.1em] text-violet-300">
-                                    Recent
-                                  </span>
-                                )}
 
                                 <span
                                   className={`inline-flex rounded-lg border px-2.5 py-1 text-xs font-medium ${getInvoiceStatusClass(
@@ -516,6 +356,14 @@ export default async function TenantInvoicesPage({
                                     )}
                                   </div>
                                 )}
+
+                                {invoice.paidAt && (
+                                  <div className="flex items-center gap-1.5">
+                                    <CreditCard size={13} />
+                                    Plătită{" "}
+                                    {invoice.paidAt.toLocaleDateString("ro-RO")}
+                                  </div>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -530,6 +378,7 @@ export default async function TenantInvoicesPage({
                             {moneyFormatter.format(
                               Number(invoice.totalAmount.toString()),
                             )}
+
                             <span className="ml-1.5 text-sm font-medium text-slate-500">
                               RON
                             </span>
@@ -552,97 +401,13 @@ export default async function TenantInvoicesPage({
                                   className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium lg:w-auto"
                                 >
                                   <CreditCard size={16} />
-
-                                  {pendingStripe
-                                    ? "Continuă plata online"
-                                    : "Plătește online cu Stripe"}
+                                  Plătește online
                                 </button>
                               </form>
-
-                              {!pendingStripe && (
-                                <form
-                                  action={requestPaymentAction}
-                                  className="w-full lg:w-auto"
-                                >
-                                  <input
-                                    type="hidden"
-                                    name="invoiceId"
-                                    value={invoice.id}
-                                  />
-
-                                  <button
-                                    type="submit"
-                                    className="app-button-secondary inline-flex w-full items-center justify-center gap-2 px-4 py-2.5 text-sm font-medium lg:w-auto"
-                                  >
-                                    <Banknote size={16} />
-                                    Cerere plată manuală
-                                  </button>
-                                </form>
-                              )}
                             </div>
                           )}
                         </div>
                       </div>
-
-                      {pendingStripe &&
-                        invoice.status === InvoiceStatus.UNPAID && (
-                          <div className="mt-5 flex items-start gap-3 rounded-xl border border-violet-400/10 bg-violet-500/[0.04] p-3.5">
-                            <ShieldCheck
-                              size={17}
-                              className="mt-0.5 shrink-0 text-violet-300"
-                            />
-
-                            <div>
-                              <p className="text-sm font-medium text-violet-200">
-                                Plată Stripe începută
-                              </p>
-
-                              <p className="mt-1 text-xs leading-5 text-slate-500">
-                                Există o sesiune de plată online în curs. Poți
-                                continua plata folosind butonul de mai sus.
-                              </p>
-                            </div>
-                          </div>
-                        )}
-
-                      {pendingManual && (
-                        <div className="mt-5 flex items-start gap-3 rounded-xl border border-amber-400/10 bg-amber-400/[0.04] p-3.5">
-                          <Clock3
-                            size={17}
-                            className="mt-0.5 shrink-0 text-amber-300"
-                          />
-
-                          <div>
-                            <p className="text-sm font-medium text-amber-200">
-                              Cerere de plată în așteptare
-                            </p>
-
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                              Cererea manuală a fost transmisă și așteaptă
-                              confirmarea administratorului.
-                            </p>
-                          </div>
-                        </div>
-                      )}
-
-                      {invoice.status === InvoiceStatus.PAID && (
-                        <div className="mt-5 flex items-start gap-3 rounded-xl border border-emerald-400/10 bg-emerald-400/[0.035] p-3.5">
-                          <CheckCircle2
-                            size={17}
-                            className="mt-0.5 shrink-0 text-emerald-300"
-                          />
-
-                          <div>
-                            <p className="text-sm font-medium text-emerald-200">
-                              Factură achitată
-                            </p>
-
-                            <p className="mt-1 text-xs leading-5 text-slate-500">
-                              Plata acestei perioade a fost confirmată.
-                            </p>
-                          </div>
-                        </div>
-                      )}
 
                       {invoice.status === InvoiceStatus.CANCELLED && (
                         <div className="mt-5 flex items-start gap-3 rounded-xl border border-rose-400/10 bg-rose-400/[0.035] p-3.5">
@@ -679,7 +444,7 @@ export default async function TenantInvoicesPage({
                               </p>
 
                               <p className="mt-0.5 text-xs text-slate-600">
-                                {invoice.items.length} poziții de calcul
+                                {invoice.items.length} utilități
                               </p>
                             </div>
                           </div>
@@ -691,110 +456,9 @@ export default async function TenantInvoicesPage({
                         </summary>
 
                         <div className="mt-4">
-                          <div className="mb-4 flex items-start gap-2.5 rounded-xl border border-blue-400/[0.08] bg-blue-400/[0.025] p-3.5">
-                            <Info
-                              size={15}
-                              className="mt-0.5 shrink-0 text-blue-300"
-                            />
-
-                            <p className="text-xs leading-5 text-slate-500">
-                              Pentru fiecare poziție poți vedea categoria,
-                              metoda de repartizare, baza de calcul, ponderea și
-                              suma rezultată.
-                            </p>
-                          </div>
-
                           <InvoiceCalculationDetails items={invoice.items} />
                         </div>
                       </details>
-
-                      {invoice.payments.length > 0 && (
-                        <div className="mt-5 overflow-hidden rounded-2xl border border-white/[0.06] bg-white/[0.018]">
-                          <div className="flex items-center justify-between gap-3 border-b border-white/[0.055] px-4 py-3.5">
-                            <div>
-                              <p className="text-sm font-medium text-slate-300">
-                                Plăți asociate
-                              </p>
-
-                              <p className="mt-0.5 text-xs text-slate-600">
-                                Istoricul tentativelor și confirmărilor de plată
-                              </p>
-                            </div>
-
-                            <WalletCards size={17} className="text-slate-600" />
-                          </div>
-
-                          <div className="divide-y divide-white/[0.05]">
-                            {invoice.payments.map((payment) => (
-                              <div
-                                key={payment.id}
-                                className="flex flex-col gap-3 px-4 py-3.5 sm:flex-row sm:items-center sm:justify-between"
-                              >
-                                <div className="flex min-w-0 items-center gap-3">
-                                  <div
-                                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-xl ring-1 ${
-                                      payment.method === PAYMENT_METHOD_STRIPE
-                                        ? "bg-violet-500/[0.07] text-violet-300 ring-violet-400/10"
-                                        : "bg-cyan-400/[0.06] text-cyan-300 ring-cyan-400/10"
-                                    }`}
-                                  >
-                                    {payment.method ===
-                                    PAYMENT_METHOD_STRIPE ? (
-                                      <CreditCard size={15} />
-                                    ) : (
-                                      <Banknote size={15} />
-                                    )}
-                                  </div>
-
-                                  <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                      <p className="text-sm font-medium text-slate-300">
-                                        {getPaymentMethodLabel(payment.method)}
-                                      </p>
-
-                                      <span
-                                        className={`inline-flex rounded-lg border px-2 py-0.5 text-[10px] font-medium ${getPaymentStatusClass(
-                                          payment.status,
-                                        )}`}
-                                      >
-                                        {paymentStatusLabels[payment.status]}
-                                      </span>
-                                    </div>
-
-                                    <div className="mt-1 flex items-center gap-1.5 text-xs text-slate-600">
-                                      <Clock3 size={11} />
-
-                                      {payment.createdAt.toLocaleDateString(
-                                        "ro-RO",
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-
-                                <div className="sm:text-right">
-                                  <p className="font-semibold tabular-nums text-slate-300">
-                                    {moneyFormatter.format(
-                                      Number(payment.amount.toString()),
-                                    )}
-                                    <span className="ml-1 text-xs font-medium text-slate-600">
-                                      RON
-                                    </span>
-                                  </p>
-
-                                  {payment.paidAt && (
-                                    <p className="mt-1 text-xs text-emerald-400/60">
-                                      Confirmată{" "}
-                                      {payment.paidAt.toLocaleDateString(
-                                        "ro-RO",
-                                      )}
-                                    </p>
-                                  )}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </div>
                   </article>
                 );

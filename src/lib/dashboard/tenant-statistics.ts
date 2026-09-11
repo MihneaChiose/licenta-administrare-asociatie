@@ -1,5 +1,8 @@
 import { prisma } from "@/lib/prisma";
-import { REQUIRED_METER_COUNT } from "@/lib/meters";
+import {
+  TENANT_METER_UTILITY_CONFIG,
+  TENANT_REQUIRED_METER_COUNT,
+} from "@/lib/meters";
 import { MaintenanceListStatus } from "@/generated/prisma/client";
 
 const visibleMaintenanceStatuses = [
@@ -12,6 +15,7 @@ export async function getTenantDashboardStatistics(tenantId: string) {
     where: {
       ownerId: tenantId,
     },
+
     select: {
       id: true,
       number: true,
@@ -28,12 +32,21 @@ export async function getTenantDashboardStatistics(tenantId: string) {
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
+  const tenantUtilityTypes = TENANT_METER_UTILITY_CONFIG.map(
+    (utility) => utility.utilityType,
+  );
+
   const currentMeterReadingCount = await prisma.meterReading.count({
     where: {
       month: currentMonth,
       year: currentYear,
+
       meter: {
         apartmentId: apartment.id,
+
+        utilityType: {
+          in: tenantUtilityTypes,
+        },
       },
     },
   });
@@ -73,6 +86,7 @@ export async function getTenantDashboardStatistics(tenantId: string) {
   const activeTickets = await prisma.ticket.count({
     where: {
       apartmentId: apartment.id,
+
       status: {
         in: ["OPEN", "IN_PROGRESS"],
       },
@@ -83,9 +97,14 @@ export async function getTenantDashboardStatistics(tenantId: string) {
     apartmentNumber: apartment.number,
     floor: apartment.floor,
     numberOfResidents: apartment.numberOfResidents,
-    meterReadingsSubmitted: currentMeterReadingCount === REQUIRED_METER_COUNT,
+
+    meterReadingsSubmitted:
+      currentMeterReadingCount === TENANT_REQUIRED_METER_COUNT,
+
     currentMaintenanceAmount: currentInvoice?.totalAmount ?? 0,
+
     currentInvoiceStatus: currentInvoice?.status ?? null,
+
     unpaidInvoices,
     activeTickets,
   };

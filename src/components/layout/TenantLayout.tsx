@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { getSession } from "@/lib/session";
 import { AppShell } from "./AppShell";
 
 type TenantLayoutProps = {
@@ -7,13 +8,20 @@ type TenantLayoutProps = {
   description?: string;
 };
 
-export function TenantLayout({
+export async function TenantLayout({
   children,
   title,
   description,
 }: TenantLayoutProps) {
+  const session = await getSession();
+
   return (
-    <AppShell role="tenant" title={title} description={description}>
+    <AppShell
+      role="tenant"
+      userName={session?.name}
+      title={title}
+      description={description}
+    >
       {children}
     </AppShell>
   );

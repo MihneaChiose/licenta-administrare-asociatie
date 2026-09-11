@@ -1,12 +1,10 @@
 "use client";
 
 import {
-  Bell,
   Building2,
   Calculator,
   CircleGauge,
   ClipboardList,
-  CreditCard,
   Gauge,
   LayoutDashboard,
   LogOut,
@@ -27,6 +25,7 @@ type AppRole = "admin" | "tenant";
 
 type AppShellProps = {
   role: AppRole;
+  userName?: string;
   children: ReactNode;
   title?: string;
   description?: string;
@@ -44,7 +43,7 @@ const adminNavigation = [
     icon: Building2,
   },
   {
-    href: "/admin/consumuri",
+    href: "/admin/contoare",
     label: "Indexuri contoare",
     icon: Gauge,
   },
@@ -57,11 +56,6 @@ const adminNavigation = [
     href: "/admin/intretinere",
     label: "Intretinere",
     icon: Calculator,
-  },
-  {
-    href: "/admin/plati",
-    label: "Plati",
-    icon: CreditCard,
   },
   {
     href: "/admin/sesizari",
@@ -82,7 +76,7 @@ const tenantNavigation = [
     icon: LayoutDashboard,
   },
   {
-    href: "/locatar/consum",
+    href: "/locatar/contoare",
     label: "Indexuri contoare",
     icon: CircleGauge,
   },
@@ -98,13 +92,14 @@ const tenantNavigation = [
   },
   {
     href: "/locatar/avizier",
-    label: "Avizier virtual",
+    label: "Avizier",
     icon: Megaphone,
   },
 ];
 
 export function AppShell({
   role,
+  userName,
   children,
   title,
   description,
@@ -116,6 +111,10 @@ export function AppShell({
   const navigation = isAdmin ? adminNavigation : tenantNavigation;
 
   const roleLabel = isAdmin ? "Administrator" : "Locatar";
+
+  const firstName = userName?.trim().split(/\s+/)[0] || roleLabel;
+
+  const userInitial = firstName.charAt(0).toUpperCase();
 
   const panelLabel = isAdmin ? "Management workspace" : "Resident workspace";
 
@@ -190,10 +189,6 @@ export function AppShell({
           </div>
 
           <div className="mt-7 flex-1 overflow-y-auto pr-1">
-            <p className="mb-3 px-3 text-[10px] font-semibold uppercase tracking-[0.2em] text-slate-600">
-              Navigatie
-            </p>
-
             <nav className="space-y-1">
               {navigation.map((item) => (
                 <SidebarLink
@@ -215,14 +210,6 @@ export function AppShell({
               tone="danger"
               onClick={() => setMobileMenuOpen(false)}
             />
-
-            <div className="mt-4 px-3">
-              <p className="text-[11px] leading-5 text-slate-600">
-                Smart property management
-              </p>
-
-              <p className="text-[10px] text-slate-700">v1.0</p>
-            </div>
           </div>
         </div>
       </aside>
@@ -251,30 +238,14 @@ export function AppShell({
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                aria-label="Notificari"
-                className="relative flex h-10 w-10 items-center justify-center rounded-xl border border-white/[0.07] bg-white/[0.035] text-slate-400 transition hover:border-violet-400/20 hover:bg-violet-500/[0.07] hover:text-violet-300"
-              >
-                <Bell size={18} strokeWidth={1.8} />
-
-                <span className="absolute right-2.5 top-2.5 h-1.5 w-1.5 rounded-full bg-violet-400 ring-2 ring-[#090e1a]" />
-              </button>
-
-              <div className="hidden items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] py-1.5 pl-2 pr-3 sm:flex">
-                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-semibold text-white">
-                  {isAdmin ? "A" : "L"}
-                </div>
-
-                <div>
-                  <p className="text-xs font-semibold text-slate-200">
-                    {roleLabel}
-                  </p>
-
-                  <p className="text-[10px] text-slate-500">Cont activ</p>
-                </div>
+            <div className="hidden items-center gap-3 rounded-xl border border-white/[0.07] bg-white/[0.035] py-1.5 pl-2 pr-3 sm:flex">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-violet-500 to-indigo-600 text-xs font-semibold text-white">
+                {userInitial}
               </div>
+
+              <p className="text-xs font-semibold text-slate-200">
+                {firstName}
+              </p>
             </div>
           </div>
         </header>
@@ -283,8 +254,6 @@ export function AppShell({
           <div className="mx-auto max-w-[1600px] px-4 py-7 sm:px-6 lg:px-10 lg:py-9">
             {(title || description) && (
               <section className="animate-page-enter relative mb-8 overflow-hidden rounded-[26px] border border-white/[0.07] bg-[#10182a]/70 px-6 py-6 shadow-[0_22px_70px_rgba(0,0,0,0.18)] backdrop-blur-xl sm:px-8 sm:py-7">
-                <div className="pointer-events-none absolute right-0 top-0 h-36 w-56 bg-gradient-to-bl from-violet-500/[0.09] via-cyan-400/[0.035] to-transparent" />
-
                 <div className="relative">
                   <div className="mb-3 flex items-center gap-2">
                     <span className="h-1.5 w-1.5 rounded-full bg-violet-500 shadow-[0_0_10px_rgba(105,92,246,0.7)]" />

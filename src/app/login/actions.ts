@@ -8,7 +8,10 @@ import { createSession } from "@/lib/session";
 import { UserRole } from "@/generated/prisma/client";
 
 const loginSchema = z.object({
-  email: z.email("Email invalid"),
+  email: z
+    .email("Email invalid")
+    .transform((email) => email.trim().toLowerCase()),
+
   password: z.string().min(1, "Parola este obligatorie"),
 });
 

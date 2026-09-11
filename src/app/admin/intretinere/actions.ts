@@ -67,6 +67,21 @@ export async function calculateMaintenanceListAction(formData: FormData) {
 
   const { month, year } = parsed.data;
 
+  const currentDate = new Date();
+  const currentMonth = currentDate.getMonth() + 1;
+  const currentYear = currentDate.getFullYear();
+
+  const isFuturePeriod =
+    year > currentYear || (year === currentYear && month > currentMonth);
+
+  if (isFuturePeriod) {
+    redirect(
+      `/admin/intretinere?error=${encodeURIComponent(
+        "Nu poți calcula o listă de întreținere pentru o perioadă viitoare.",
+      )}`,
+    );
+  }
+
   const association = await getAdminAssociation(session.id);
 
   if (!association) {
@@ -379,7 +394,7 @@ export async function publishMaintenanceListAction(formData: FormData) {
   if (maintenanceList.status === MaintenanceListStatus.CLOSED) {
     redirect(
       `/admin/intretinere?error=${encodeURIComponent(
-        "Lista este deja închisă.",
+        "Lista este deja publicată.",
       )}`,
     );
   }
@@ -413,79 +428,6 @@ export async function publishMaintenanceListAction(formData: FormData) {
   redirect(
     `/admin/intretinere?success=${encodeURIComponent(
       "Lista de întreținere a fost publicată. Locatarii o pot vedea acum.",
-    )}`,
-  );
-}
-
-export async function closeMaintenanceListAction(formData: FormData) {
-  const session = await getSession();
-
-  if (!session) {
-    redirect("/login");
-  }
-
-  if (session.role !== UserRole.ADMIN) {
-    redirect("/locatar/dashboard");
-  }
-
-  const parsed = maintenanceListSchema.safeParse({
-    maintenanceListId: formData.get("maintenanceListId"),
-  });
-
-  if (!parsed.success) {
-    redirect(
-      `/admin/intretinere?error=${encodeURIComponent(
-        "Lista de întreținere este invalidă.",
-      )}`,
-    );
-  }
-
-  const maintenanceList = await prisma.maintenanceList.findFirst({
-    where: {
-      id: parsed.data.maintenanceListId,
-      association: {
-        adminId: session.id,
-      },
-    },
-  });
-
-  if (!maintenanceList) {
-    redirect(
-      `/admin/intretinere?error=${encodeURIComponent(
-        "Lista de întreținere nu există.",
-      )}`,
-    );
-  }
-
-  if (maintenanceList.status === MaintenanceListStatus.CLOSED) {
-    redirect(
-      `/admin/intretinere?success=${encodeURIComponent(
-        "Lista este deja închisă.",
-      )}`,
-    );
-  }
-
-  if (maintenanceList.status !== MaintenanceListStatus.PUBLISHED) {
-    redirect(
-      `/admin/intretinere?error=${encodeURIComponent(
-        "Doar o listă publicată poate fi închisă.",
-      )}`,
-    );
-  }
-
-  await prisma.maintenanceList.update({
-    where: {
-      id: maintenanceList.id,
-    },
-    data: {
-      status: MaintenanceListStatus.CLOSED,
-      closedAt: new Date(),
-    },
-  });
-
-  redirect(
-    `/admin/intretinere?success=${encodeURIComponent(
-      "Lista de întreținere a fost închisă.",
     )}`,
   );
 }

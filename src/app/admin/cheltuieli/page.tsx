@@ -1,28 +1,22 @@
 import {
   CalendarDays,
-  CircleDollarSign,
   Info,
   Layers3,
   Plus,
   ReceiptText,
   Split,
   Tags,
-  WalletCards,
 } from "lucide-react";
 import { redirect } from "next/navigation";
-import {
-  ExpenseCategory,
-  ExpenseDistributionMethod,
-  UserRole,
-} from "@/generated/prisma/client";
+import { ExpenseDistributionMethod, UserRole } from "@/generated/prisma/client";
 import { AdminLayout } from "@/components/layout/AdminLayout";
 import { prisma } from "@/lib/prisma";
 import { getSession } from "@/lib/session";
-import { createExpenseAction } from "./actions";
 import {
   EXPENSE_CATEGORY_LABELS,
   EXPENSE_CATEGORY_OPTIONS,
 } from "@/lib/expenses";
+import { ExpenseForm } from "./ExpenseForm";
 
 type ExpensesPageProps = {
   searchParams: Promise<{
@@ -56,13 +50,9 @@ const distributionMethodLabels: Record<ExpenseDistributionMethod, string> = {
 
 const distributionMethodStyles: Record<ExpenseDistributionMethod, string> = {
   PER_APARTMENT: "border-violet-400/10 bg-violet-500/[0.07] text-violet-300",
-
   PER_PERSON: "border-cyan-400/10 bg-cyan-400/[0.06] text-cyan-300",
-
   BY_CONSUMPTION: "border-blue-400/10 bg-blue-400/[0.06] text-blue-300",
-
   BY_SURFACE: "border-emerald-400/10 bg-emerald-400/[0.06] text-emerald-300",
-
   CUSTOM: "border-amber-400/10 bg-amber-400/[0.06] text-amber-300",
 };
 
@@ -70,6 +60,21 @@ const moneyFormatter = new Intl.NumberFormat("ro-RO", {
   minimumFractionDigits: 2,
   maximumFractionDigits: 2,
 });
+
+const excludedCategoryLabels = new Set([
+  "lift",
+  "administrare",
+  "fond rulment",
+  "fond de rulment",
+]);
+
+function normalizeLabel(value: string) {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .trim()
+    .toLowerCase();
+}
 
 export default async function AdminExpensesPage({
   searchParams,
@@ -93,10 +98,6 @@ export default async function AdminExpensesPage({
       },
     },
 
-    include: {
-      association: true,
-    },
-
     orderBy: [
       {
         year: "desc",
@@ -111,7 +112,6 @@ export default async function AdminExpensesPage({
   });
 
   const currentDate = new Date();
-
   const currentMonth = currentDate.getMonth() + 1;
   const currentYear = currentDate.getFullYear();
 
@@ -124,19 +124,12 @@ export default async function AdminExpensesPage({
     0,
   );
 
-  const totalRegisteredAmount = expenses.reduce(
-    (total, expense) => total + Number(expense.totalAmount.toString()),
-    0,
+  const availableCategoryOptions = EXPENSE_CATEGORY_OPTIONS.filter(
+    (category) => !excludedCategoryLabels.has(normalizeLabel(category.label)),
   );
 
-  const categoryCount = new Set(expenses.map((expense) => expense.category))
-    .size;
-
   return (
-    <AdminLayout
-      title="Cheltuieli lunare"
-      description="Introdu si vizualizeaza cheltuielile lunare ale asociatiei."
-    >
+    <AdminLayout title="Cheltuieli lunare">
       <div className="mx-auto max-w-7xl space-y-8">
         <section>
           <div className="mb-5">
@@ -151,13 +144,9 @@ export default async function AdminExpensesPage({
             <h2 className="mt-2 text-xl font-semibold tracking-[-0.03em] text-slate-100">
               Situatie cheltuieli
             </h2>
-
-            <p className="mt-1 text-sm text-slate-500">
-              Imagine de ansamblu asupra cheltuielilor inregistrate.
-            </p>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <div className="app-card relative overflow-hidden p-5">
               <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-violet-500/[0.08] blur-3xl" />
 
@@ -168,11 +157,11 @@ export default async function AdminExpensesPage({
                   </p>
 
                   <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {expenses.length}
+                    {currentMonthExpenses.length}
                   </p>
 
                   <p className="mt-2 text-xs text-slate-500">
-                    Cheltuieli introduse
+                    Cheltuieli in luna curenta
                   </p>
                 </div>
 
@@ -188,7 +177,7 @@ export default async function AdminExpensesPage({
               <div className="relative flex items-start justify-between gap-4">
                 <div>
                   <p className="text-sm font-medium text-slate-400">
-                    Luna curenta
+                    Total luna curenta
                   </p>
 
                   <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-50">
@@ -202,54 +191,6 @@ export default async function AdminExpensesPage({
 
                 <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-cyan-400/10 text-cyan-300 ring-1 ring-cyan-400/10">
                   <CalendarDays size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-blue-400/[0.07] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Total inregistrat
-                  </p>
-
-                  <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {moneyFormatter.format(totalRegisteredAmount)}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    RON in istoricul disponibil
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-blue-400/10 text-blue-300 ring-1 ring-blue-400/10">
-                  <CircleDollarSign size={20} strokeWidth={1.8} />
-                </div>
-              </div>
-            </div>
-
-            <div className="app-card relative overflow-hidden p-5">
-              <div className="pointer-events-none absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-400/[0.06] blur-3xl" />
-
-              <div className="relative flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-sm font-medium text-slate-400">
-                    Categorii utilizate
-                  </p>
-
-                  <p className="mt-3 text-3xl font-semibold tracking-[-0.04em] text-slate-50">
-                    {categoryCount}
-                  </p>
-
-                  <p className="mt-2 text-xs text-slate-500">
-                    Tipuri de cheltuieli
-                  </p>
-                </div>
-
-                <div className="flex h-11 w-11 items-center justify-center rounded-[14px] bg-emerald-400/10 text-emerald-300 ring-1 ring-emerald-400/10">
-                  <Tags size={20} strokeWidth={1.8} />
                 </div>
               </div>
             </div>
@@ -280,17 +221,12 @@ export default async function AdminExpensesPage({
                   </h2>
                 </div>
               </div>
-
-              <p className="mt-3 text-sm leading-6 text-slate-500">
-                Completeaza datele necesare pentru o cheltuiala lunara.
-              </p>
             </div>
 
             <div className="relative p-6">
               {params.error && (
                 <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-400/15 bg-rose-500/[0.08] p-4 text-sm text-rose-300">
                   <Info size={18} className="mt-0.5 shrink-0" />
-
                   <p>{params.error}</p>
                 </div>
               )}
@@ -298,179 +234,18 @@ export default async function AdminExpensesPage({
               {params.success && (
                 <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-400/15 bg-emerald-500/[0.08] p-4 text-sm text-emerald-300">
                   <ReceiptText size={18} className="mt-0.5 shrink-0" />
-
                   <p>{params.success}</p>
                 </div>
               )}
 
-              <form action={createExpenseAction} className="space-y-5">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <label
-                      htmlFor="month"
-                      className="text-sm font-medium text-slate-300"
-                    >
-                      Luna
-                    </label>
-
-                    <select
-                      id="month"
-                      name="month"
-                      defaultValue={currentMonth}
-                      className="app-input mt-2 px-3 py-3"
-                    >
-                      {Object.entries(monthNames).map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  <div>
-                    <label
-                      htmlFor="year"
-                      className="text-sm font-medium text-slate-300"
-                    >
-                      An
-                    </label>
-
-                    <input
-                      id="year"
-                      name="year"
-                      type="number"
-                      defaultValue={currentYear}
-                      required
-                      className="app-input mt-2 px-3 py-3"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="category"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    Categorie cheltuiala
-                  </label>
-
-                  <select
-                    id="category"
-                    name="category"
-                    className="app-input mt-2 px-3 py-3"
-                    defaultValue={ExpenseCategory.COLD_WATER}
-                  >
-                    {EXPENSE_CATEGORY_OPTIONS.map((category) => (
-                      <option key={category.value} value={category.value}>
-                        {category.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="description"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    Descriere
-                  </label>
-
-                  <input
-                    id="description"
-                    name="description"
-                    type="text"
-                    required
-                    placeholder="Ex: Factura apa rece luna curenta"
-                    className="app-input mt-2 px-3 py-3"
-                  />
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="totalAmount"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    Suma totala
-                  </label>
-
-                  <div className="relative mt-2">
-                    <WalletCards
-                      size={17}
-                      className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-600"
-                    />
-
-                    <input
-                      id="totalAmount"
-                      name="totalAmount"
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      required
-                      placeholder="Ex: 1200"
-                      className="app-input py-3 pl-11 pr-16"
-                    />
-
-                    <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs font-medium text-slate-600">
-                      RON
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label
-                    htmlFor="distributionMethod"
-                    className="text-sm font-medium text-slate-300"
-                  >
-                    Metoda de impartire
-                  </label>
-
-                  <select
-                    id="distributionMethod"
-                    name="distributionMethod"
-                    className="app-input mt-2 px-3 py-3"
-                    defaultValue={ExpenseDistributionMethod.PER_APARTMENT}
-                  >
-                    <option value={ExpenseDistributionMethod.PER_APARTMENT}>
-                      Per apartament
-                    </option>
-
-                    <option value={ExpenseDistributionMethod.PER_PERSON}>
-                      Per persoana
-                    </option>
-
-                    <option value={ExpenseDistributionMethod.BY_CONSUMPTION}>
-                      Dupa consum
-                    </option>
-
-                    <option value={ExpenseDistributionMethod.BY_SURFACE}>
-                      Dupa suprafata
-                    </option>
-
-                    <option value={ExpenseDistributionMethod.CUSTOM}>
-                      Custom
-                    </option>
-                  </select>
-
-                  <div className="mt-3 flex items-start gap-2.5 rounded-xl border border-blue-400/10 bg-blue-400/[0.04] p-3.5">
-                    <Info size={16} className="mt-0.5 shrink-0 text-blue-300" />
-
-                    <p className="text-xs leading-5 text-slate-500">
-                      Metoda &quot;Dupa consum&quot; poate fi folosita doar
-                      pentru utilitatile care au contor: apa rece, apa calda,
-                      gaze, electricitate si caldura.
-                    </p>
-                  </div>
-                </div>
-
-                <button
-                  type="submit"
-                  className="app-button-primary inline-flex w-full items-center justify-center gap-2 px-4 py-3 text-sm font-medium"
-                >
-                  <Plus size={17} />
-                  Adauga cheltuiala
-                </button>
-              </form>
+              <ExpenseForm
+                currentMonth={currentMonth}
+                currentYear={currentYear}
+                categories={availableCategoryOptions.map((category) => ({
+                  value: category.value,
+                  label: category.label,
+                }))}
+              />
             </div>
           </section>
 
@@ -488,10 +263,6 @@ export default async function AdminExpensesPage({
                 <h2 className="mt-2 text-lg font-semibold text-slate-100">
                   Cheltuieli introduse
                 </h2>
-
-                <p className="mt-1 text-sm text-slate-500">
-                  Total inregistrari: {expenses.length}
-                </p>
               </div>
 
               <div className="inline-flex w-fit items-center gap-2 rounded-xl border border-white/[0.06] bg-white/[0.025] px-3 py-2 text-xs text-slate-500">
@@ -527,7 +298,7 @@ export default async function AdminExpensesPage({
                         Categorie
                       </th>
 
-                      <th className="px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
+                      <th className="w-[220px] px-6 py-3.5 text-xs font-semibold uppercase tracking-[0.08em] text-slate-500">
                         Descriere
                       </th>
 
@@ -568,14 +339,13 @@ export default async function AdminExpensesPage({
                         <td className="px-6 py-4">
                           <span className="inline-flex items-center gap-1.5 rounded-lg border border-white/[0.07] bg-white/[0.035] px-2.5 py-1 text-xs font-medium text-slate-300">
                             <Tags size={12} className="text-slate-500" />
-
                             {EXPENSE_CATEGORY_LABELS[expense.category]}
                           </span>
                         </td>
 
-                        <td className="max-w-[320px] px-6 py-4">
-                          <p className="truncate text-slate-400">
-                            {expense.description}
+                        <td className="w-[220px] max-w-[220px] px-6 py-4">
+                          <p className="line-clamp-2 break-words leading-5 text-slate-400">
+                            {expense.description || "—"}
                           </p>
                         </td>
 
@@ -600,7 +370,6 @@ export default async function AdminExpensesPage({
                             }`}
                           >
                             <Split size={12} />
-
                             {
                               distributionMethodLabels[
                                 expense.distributionMethod
